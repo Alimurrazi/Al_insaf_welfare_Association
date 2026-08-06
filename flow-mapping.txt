@@ -1,0 +1,33 @@
+Here's the full flow we've built, end to end:
+
+1. Plan (Claude chat)
+Hash out architecture, data models, and stack tradeoffs in plain conversation — no file access needed yet. Turn the decisions into notes you'll seed CLAUDE.md with.
+
+2. Design the UI (Claude artifacts / Claude Design)
+Build screens directly as working HTML/React mockups instead of a separate design tool — no Figma handoff needed. Nail the shared design system first (colors, type scale, spacing, button/card/input variants) before moving screen to screen, so nothing drifts.
+
+3. Scaffold the project (Claude Code)
+Write a CLAUDE.md at repo root: stack, conventions, package manager, testing rules. This is what every future session reads, so it's the highest-leverage file in the whole setup.
+
+4. Lock in conventions as they're approved
+As design and testing decisions solidify, write them down — not just in your head:
+
+UI conventions block (tokens, component rules) → CLAUDE.md or a ui-conventions skill
+Testing conventions (framework, coverage expectations, "always test the error path") → CLAUDE.md or a testing skill
+
+5. Build features test-first (Claude Code)
+Write tests before implementation, ideally via a separate pass/subagent from the one that writes the code, so tests stay an independent check rather than shaped to match the implementation.
+
+6. Wire up MCP servers for real systems
+Database MCP (query schema directly), GitHub MCP (PRs/issues/CI), browser/Playwright MCP (run tests, catch visual regressions against your approved designs), error-tracking MCP if you have one.
+
+7. Enforce with hooks, not hope
+
+Lint/type-check after every edit
+Run tests before allowing a commit, block on failure
+Block destructive shell commands (rm -rf, force-push to main) without confirmation
+
+8. Delegate cleanly with subagents
+Code review, exploration, and test-writing go to subagents with clean context, keeping your main thread focused on the feature at hand.
+
+That's the loop: design and decisions get made once, get written down, then hooks + tests + MCP access keep every later session honest against them instead of drifting.
