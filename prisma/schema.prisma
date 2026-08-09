@@ -1,8 +1,6 @@
 // This is your Prisma schema file,
 // learn more about it in the docs: https://pris.ly/d/prisma-schema
 
-// Get a free hosted Postgres database in seconds: `npx create-db`
-
 generator client {
   provider = "prisma-client"
   output   = "../src/generated/prisma"
@@ -10,4 +8,112 @@ generator client {
 
 datasource db {
   provider = "postgresql"
+}
+
+enum Role {
+  ADMIN
+  MEMBER
+}
+
+model Member {
+  id       String   @id @default(cuid())
+  name     String
+  email    String   @unique
+  role     Role     @default(MEMBER)
+  joinDate DateTime @default(now())
+
+  shares          MemberShare[]
+  monthlyDeposits MonthlyDeposit[] @relation("MemberOwnDeposits")
+  annualTopups    AnnualTopup[]    @relation("MemberOwnTopups")
+
+  loggedDeposits  MonthlyDeposit[] @relation("DepositLoggedBy")
+  loggedTopups    AnnualTopup[]    @relation("TopupLoggedBy")
+  loggedExpenses  Expense[]        @relation("ExpenseLoggedBy")
+  activityEntries ActivityLog[]    @relation("ActivityActor")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("members")
+}
+
+// Share count changes are new rows, never overwritten, so past months
+// always calculate against the share count effective at that time.
+model MemberShare {
+  id            String   @id @default(cuid())
+  memberId      String
+  member        Member   @relation(fields: [memberId], references: [id])
+  shareCount    Int
+  effectiveFrom DateTime
+
+  createdAt DateTime @default(now())
+
+  @@index([memberId])
+  @@map("member_shares")
+}
+
+model MonthlyDeposit {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation("MemberOwnDeposits", fields: [memberId], references: [id])
+  month       Int
+  year        Int
+  amount      Decimal  @db.Decimal(10, 2)
+  paidDate    DateTime
+  note        String?
+  createdById String
+  createdBy   Member   @relation("DepositLoggedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([memberId, year, month])
+  @@map("monthly_deposits")
+}
+
+model AnnualTopup {
+  id          String   @id @default(cuid())
+  memberId    String
+  member      Member   @relation("MemberOwnTopups", fields: [memberId], references: [id])
+  year        Int
+  otpNumber   Int
+  amount      Decimal  @db.Decimal(10, 2)
+  paidDate    DateTime
+  note        String?
+  createdById String
+  createdBy   Member   @relation("TopupLoggedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@index([memberId, year, otpNumber])
+  @@map("annual_topups")
+}
+
+// Group-level spending — not tied to a single member.
+model Expense {
+  id          String   @id @default(cuid())
+  date        DateTime
+  category    String
+  amount      Decimal  @db.Decimal(10, 2)
+  note        String?
+  createdById String
+  createdBy   Member   @relation("ExpenseLoggedBy", fields: [createdById], references: [id])
+
+  createdAt DateTime @default(now())
+
+  @@map("expenses")
+}
+
+model ActivityLog {
+  id         String   @id @default(cuid())
+  actorId    String
+  actor      Member   @relation("ActivityActor", fields: [actorId], references: [id])
+  action     String
+  entityType String
+  entityId   String
+  oldValue   Json?
+  newValue   Json?
+  createdAt  DateTime @default(now())
+
+  @@index([entityType, entityId])
+  @@map("activity_log")
 }
