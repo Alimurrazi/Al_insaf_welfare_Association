@@ -16,7 +16,7 @@ export async function TopNav() {
 
   return (
     <header className="border-b border-line bg-surface">
-      <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-3">
+      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
         <nav className="flex flex-wrap items-center gap-4 text-sm">
           <Link href="/" className="font-display font-semibold text-ink hover:text-accent">
             Al-Insaf
