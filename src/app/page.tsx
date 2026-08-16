@@ -31,6 +31,12 @@ export default async function Home() {
           >
             Manage deposits
           </Link>
+          <Link
+            href="/topups"
+            className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+          >
+            Manage annual top-ups
+          </Link>
         </nav>
       )}
 
