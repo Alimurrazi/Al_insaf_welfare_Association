@@ -41,7 +41,7 @@ export default async function MemberLedgerPage({
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total paid</p>
-          <p className="font-mono text-lg tabular-nums text-ink">${ledger.totalPaid.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">Tk {ledger.totalPaid.toFixed(2)}</p>
         </div>
       </section>
 
@@ -73,7 +73,7 @@ export default async function MemberLedgerPage({
               key={deposit.id}
               className="rounded-md border border-line bg-surface p-3 font-mono text-sm tabular-nums text-ink"
             >
-              {deposit.month}/{deposit.year} — ${Number(deposit.amount).toFixed(2)} — paid{" "}
+              {deposit.month}/{deposit.year} — Tk {Number(deposit.amount).toFixed(2)} — paid{" "}
               {formatDate(deposit.paidDate)}
               {deposit.note ? ` — ${deposit.note}` : ""}
             </li>
@@ -92,7 +92,7 @@ export default async function MemberLedgerPage({
               key={topup.id}
               className="rounded-md border border-line bg-surface p-3 font-mono text-sm tabular-nums text-ink"
             >
-              {topup.year} OTP #{topup.otpNumber} — ${Number(topup.amount).toFixed(2)} — paid{" "}
+              {topup.year} OTP #{topup.otpNumber} — Tk {Number(topup.amount).toFixed(2)} — paid{" "}
               {formatDate(topup.paidDate)}
               {topup.note ? ` — ${topup.note}` : ""}
             </li>

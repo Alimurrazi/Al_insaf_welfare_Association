@@ -87,7 +87,7 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await addForm.getByLabel("Note").fill("Surveyor fee");
     await addForm.getByRole("button", { name: "Add expense" }).click();
 
-    await expect(page.getByText("Total: $500.00")).toBeVisible();
+    await expect(page.getByText("Total: Tk 500.00")).toBeVisible();
 
     // Scoped positionally rather than by text: unlike deposits/topups, an
     // expense row has no <select> (whose option text stays in the DOM even
@@ -105,7 +105,7 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
 
     await expect(row).toContainText("550.00");
     await expect(row).toContainText("Surveyor fee (corrected)");
-    await expect(page.getByText("Total: $550.00")).toBeVisible();
+    await expect(page.getByText("Total: Tk 550.00")).toBeVisible();
   });
 
   test("filtering by category narrows the list and updates the running total", async ({
@@ -129,7 +129,7 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await filterForm.getByRole("button", { name: "Apply" }).click();
 
     await expect(page.getByText("1 expense", { exact: true })).toBeVisible();
-    await expect(page.getByText("Total: $300.00")).toBeVisible();
+    await expect(page.getByText("Total: Tk 300.00")).toBeVisible();
     await expect(page.locator("main ul li")).toHaveCount(1);
   });
 });

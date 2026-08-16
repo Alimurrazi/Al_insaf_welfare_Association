@@ -68,7 +68,7 @@ test.describe("/ (dashboard/home) — shared", () => {
     const sharesStat = page.locator("div", { hasText: "Your shares" }).last();
     await expect(sharesStat).toContainText("2");
     const paidStat = page.locator("div", { hasText: "Your total paid" }).last();
-    await expect(paidStat).toContainText("$3000.00");
+    await expect(paidStat).toContainText("Tk 3000.00");
 
     await page.getByRole("link", { name: "My ledger" }).click();
     await expect(page).toHaveURL(`/ledger/${memberId}`);

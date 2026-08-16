@@ -132,7 +132,7 @@ export default async function ExpensesPage({
             {filtered.length} {filtered.length === 1 ? "expense" : "expenses"}
           </p>
           <p className="font-mono text-sm tabular-nums text-ink">
-            Total: ${total.toFixed(2)}
+            Total: Tk {total.toFixed(2)}
           </p>
         </div>
         <ul className="flex flex-col gap-2">

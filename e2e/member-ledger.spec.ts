@@ -70,7 +70,7 @@ test.describe("/ledger/[memberId] — shared, read-only for both roles", () => {
     await expect(page.getByRole("heading", { name: TARGET_NAME })).toBeVisible();
     const currentSharesStat = page.locator("div", { hasText: "Current shares" }).last();
     await expect(currentSharesStat).toContainText("2");
-    await expect(page.getByText("$3000.00").first()).toBeVisible();
+    await expect(page.getByText("Tk 3000.00").first()).toBeVisible();
   });
 
   test("a MEMBER session can also view a member's individual ledger (read-only, not gated to admins)", async ({

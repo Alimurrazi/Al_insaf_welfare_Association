@@ -26,15 +26,15 @@ export default async function Home() {
       <section className="flex flex-wrap justify-center gap-6 rounded-md border border-line bg-surface p-4">
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total collected</p>
-          <p className="font-mono text-lg tabular-nums text-ink">${summary.totalCollected.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">Tk {summary.totalCollected.toFixed(2)}</p>
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total spent</p>
-          <p className="font-mono text-lg tabular-nums text-ink">${summary.totalSpent.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">Tk {summary.totalSpent.toFixed(2)}</p>
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Balance in hand</p>
-          <p className="font-mono text-lg tabular-nums text-ink">${summary.balance.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">Tk {summary.balance.toFixed(2)}</p>
         </div>
       </section>
 
@@ -45,7 +45,7 @@ export default async function Home() {
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Your total paid</p>
-          <p className="font-mono text-lg tabular-nums text-ink">${personal.totalPaid.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">Tk {personal.totalPaid.toFixed(2)}</p>
         </div>
       </section>
     </main>

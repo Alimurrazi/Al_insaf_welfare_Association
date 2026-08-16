@@ -31,7 +31,7 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
     return (
       <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
         <span className="flex items-center gap-2 font-mono tabular-nums">
-          {memberName} — {deposit.month}/{deposit.year} — ${deposit.amount.toFixed(2)} — paid{" "}
+          {memberName} — {deposit.month}/{deposit.year} — Tk {deposit.amount.toFixed(2)} — paid{" "}
           {formatDate(deposit.paidDate)}
           {deposit.note ? ` — ${deposit.note}` : ""}
         </span>

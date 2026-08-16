@@ -30,7 +30,7 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
     return (
       <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
         <span className="flex items-center gap-2 font-mono tabular-nums">
-          {formatDate(expense.date)} — {expense.category} — ${expense.amount.toFixed(2)}
+          {formatDate(expense.date)} — {expense.category} — Tk {expense.amount.toFixed(2)}
           {expense.note ? ` — ${expense.note}` : ""}
         </span>
         {editExpense && (

@@ -31,7 +31,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
     return (
       <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
         <span className="flex items-center gap-2 font-mono tabular-nums">
-          {memberName} — {topup.year} OTP #{topup.otpNumber} — ${topup.amount.toFixed(2)} — paid{" "}
+          {memberName} — {topup.year} OTP #{topup.otpNumber} — Tk {topup.amount.toFixed(2)} — paid{" "}
           {formatDate(topup.paidDate)}
           {topup.note ? ` — ${topup.note}` : ""}
         </span>

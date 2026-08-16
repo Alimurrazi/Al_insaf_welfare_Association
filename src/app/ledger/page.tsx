@@ -10,7 +10,7 @@ const MONTH_LABELS = [
 function formatCell(entries: LedgerEntry[]) {
   if (entries.length === 0) return "—";
   return entries
-    .map((entry) => `$${entry.amount.toFixed(2)} (${new Date(entry.paidDate).toISOString().slice(0, 10)})`)
+    .map((entry) => `Tk ${entry.amount.toFixed(2)} (${new Date(entry.paidDate).toISOString().slice(0, 10)})`)
     .join(", ");
 }
 

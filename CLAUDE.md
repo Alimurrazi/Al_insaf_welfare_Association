@@ -50,6 +50,8 @@ Approved design system (see the "Insaf Ledger" artifact for the full reference/r
 
 **Type scale**: Tailwind's default `text-xs`/`text-sm`/`text-base` are unchanged (they already matched); `text-lg`/`text-xl`/`text-2xl` are overridden in `globals.css` to 1.25rem/1.75rem/2.5rem to give the display face more presence.
 
+**Currency**: Amounts are in Bangladeshi Taka. Render as `Tk {amount.toFixed(2)}` (e.g. `Tk 3000.00`) — never `$`.
+
 **Spacing**: Tailwind's default numeric scale (`p-4`, `gap-6`, etc.) maps directly — no custom spacing tokens needed.
 
 **Components**:
