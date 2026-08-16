@@ -32,7 +32,7 @@ Tracks the build roadmap step by step. Check items off as they're completed; kee
 - [x] Manage member shares (admin-only) — record a new share-count row (with effective-from date) for a member; left over from the members screen, kept separate since member_shares is an append-only history table with its own effective-dating logic
 - [x] Add/edit deposit entry
 - [x] Add/edit annual top-up entry
-- [ ] Add/edit expense entry
+- [x] Add/edit expense entry
 - [ ] Ledger grid (shared)
 - [ ] Individual member ledger (shared)
 - [ ] Expenses page (shared)

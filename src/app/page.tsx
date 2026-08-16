@@ -37,6 +37,12 @@ export default async function Home() {
           >
             Manage annual top-ups
           </Link>
+          <Link
+            href="/expenses"
+            className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+          >
+            Manage expenses
+          </Link>
         </nav>
       )}
 
