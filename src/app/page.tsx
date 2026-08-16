@@ -1,13 +1,20 @@
 import Link from "next/link";
 import { auth, signOut } from "@/auth";
 import { RoleBadge } from "@/components/role-badge";
+import { getDashboardSummary } from "@/lib/dashboard";
+import { getMemberLedger } from "@/lib/member-ledger";
 
 export default async function Home() {
   const session = await auth();
   const user = session!.user;
 
+  const [summary, personal] = await Promise.all([
+    getDashboardSummary(),
+    getMemberLedger(user.id, new Date()),
+  ]);
+
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
+    <main className="mx-auto flex min-h-screen max-w-3xl flex-col items-center justify-center gap-6 px-4 py-12">
       <div className="flex flex-col items-center gap-2 text-center">
         <h1 className="font-display text-xl font-bold text-ink">
           Al-Insaf Welfare Association
@@ -17,7 +24,39 @@ export default async function Home() {
         </p>
       </div>
 
+      <section className="flex flex-wrap justify-center gap-6 rounded-md border border-line bg-surface p-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total collected</p>
+          <p className="font-mono text-lg tabular-nums text-ink">${summary.totalCollected.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total spent</p>
+          <p className="font-mono text-lg tabular-nums text-ink">${summary.totalSpent.toFixed(2)}</p>
+        </div>
+        <div>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Balance in hand</p>
+          <p className="font-mono text-lg tabular-nums text-ink">${summary.balance.toFixed(2)}</p>
+        </div>
+      </section>
+
+      <section className="flex flex-wrap justify-center gap-6 rounded-md border border-line bg-surface p-4">
+        <div>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Your shares</p>
+          <p className="font-mono text-lg tabular-nums text-ink">{personal.currentShareCount}</p>
+        </div>
+        <div>
+          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Your total paid</p>
+          <p className="font-mono text-lg tabular-nums text-ink">${personal.totalPaid.toFixed(2)}</p>
+        </div>
+      </section>
+
       <nav className="flex flex-col items-center gap-2 text-sm">
+        <Link
+          href={`/ledger/${user.id}`}
+          className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+        >
+          My ledger
+        </Link>
         <Link
           href="/ledger"
           className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
