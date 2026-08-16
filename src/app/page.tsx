@@ -17,6 +17,15 @@ export default async function Home() {
         </p>
       </div>
 
+      <nav className="flex flex-col items-center gap-2 text-sm">
+        <Link
+          href="/ledger"
+          className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+        >
+          Ledger grid
+        </Link>
+      </nav>
+
       {user.role === "ADMIN" && (
         <nav className="flex flex-col items-center gap-2 text-sm">
           <Link
