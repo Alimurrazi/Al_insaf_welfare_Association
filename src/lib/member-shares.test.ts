@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import { MemberNotFoundError } from "./members";
 import {
   addMemberShare,
+  getShareCountAsOf,
   listMemberShares,
   listSharesForMembers,
   validateMemberShareInput,
@@ -168,6 +169,46 @@ describe("member-shares service", () => {
     it("returns an empty map for an empty member id list", async () => {
       const byMember = await listSharesForMembers([]);
       expect(byMember.size).toBe(0);
+    });
+  });
+
+  describe("getShareCountAsOf", () => {
+    // Pure function over an already-fetched array (e.g. from
+    // `listMemberShares`) — no DB access, so plain fixture objects suffice.
+    function share(shareCount: number, effectiveFrom: string): MemberShareModel {
+      return {
+        id: `share-${effectiveFrom}`,
+        memberId: "member-1",
+        shareCount,
+        effectiveFrom: new Date(effectiveFrom),
+        createdAt: new Date(effectiveFrom),
+      };
+    }
+
+    it("picks the row with the latest effectiveFrom on or before the given date", () => {
+      const shares = [share(2, "2026-01-01"), share(3, "2025-01-01"), share(1, "2024-01-01")];
+      expect(getShareCountAsOf(shares, new Date("2026-06-01"))).toBe(2);
+      expect(getShareCountAsOf(shares, new Date("2025-06-01"))).toBe(3);
+      expect(getShareCountAsOf(shares, new Date("2024-06-01"))).toBe(1);
+    });
+
+    it("ignores rows with an effectiveFrom in the future relative to the given date", () => {
+      const shares = [share(5, "2026-01-01"), share(2, "2024-01-01")];
+      expect(getShareCountAsOf(shares, new Date("2025-01-01"))).toBe(2);
+    });
+
+    it("returns 0 when every row is in the future relative to the given date", () => {
+      const shares = [share(5, "2026-01-01")];
+      expect(getShareCountAsOf(shares, new Date("2020-01-01"))).toBe(0);
+    });
+
+    it("returns 0 for an empty share history", () => {
+      expect(getShareCountAsOf([], new Date("2026-01-01"))).toBe(0);
+    });
+
+    it("works regardless of the input array's order", () => {
+      const shares = [share(1, "2024-01-01"), share(2, "2026-01-01"), share(3, "2025-01-01")];
+      expect(getShareCountAsOf(shares, new Date("2025-06-01"))).toBe(3);
     });
   });
 });

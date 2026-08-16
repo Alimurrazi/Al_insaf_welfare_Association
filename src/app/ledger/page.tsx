@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { getLedgerGrid, type LedgerEntry } from "@/lib/ledger";
 import { inputClasses, primaryButtonClasses } from "@/components/styles";
 
@@ -72,7 +73,12 @@ export default async function LedgerPage({
             {grid.map((row) => (
               <tr key={row.memberId} className="border-b border-line last:border-0">
                 <td className="sticky left-0 whitespace-nowrap bg-surface p-2 font-medium">
-                  {row.memberName}
+                  <Link
+                    href={`/ledger/${row.memberId}`}
+                    className="text-accent underline underline-offset-4 hover:text-accent-strong hover:no-underline"
+                  >
+                    {row.memberName}
+                  </Link>
                 </td>
                 {row.months.map((entries, i) => (
                   <td key={i} className="whitespace-nowrap p-2 font-mono text-xs tabular-nums">

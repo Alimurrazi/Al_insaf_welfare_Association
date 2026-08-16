@@ -34,7 +34,7 @@ Tracks the build roadmap step by step. Check items off as they're completed; kee
 - [x] Add/edit annual top-up entry
 - [x] Add/edit expense entry
 - [x] Ledger grid (shared) — members x months (Jan-Dec) + OTP-1/OTP-2, year selector; cells are arrays since the schema allows more than one deposit/topup per member/period
-- [ ] Individual member ledger (shared)
+- [x] Individual member ledger (shared) — full deposit/topup/share history, total paid, current standing computed as-of-today via `getShareCountAsOf`; linked from each Ledger Grid row
 - [ ] Expenses page (shared)
 - [ ] Activity feed (shared)
 - [ ] Dashboard/home (shared)

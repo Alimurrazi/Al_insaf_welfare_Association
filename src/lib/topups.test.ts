@@ -4,6 +4,7 @@ import { MemberNotFoundError } from "./members";
 import {
   createTopup,
   listTopups,
+  listTopupsForMember,
   TopupNotFoundError,
   updateTopup,
   validateTopupInput,
@@ -314,6 +315,41 @@ describe("topups service", () => {
         topupB.id,
         topupA.id,
       ]);
+    });
+  });
+
+  describe("listTopupsForMember", () => {
+    it("returns only the given member's top-ups, ordered most-recent first", async () => {
+      const actor = await makeActor("for-member-1");
+      const member = await makeTargetMember("for-member-1");
+      const otherMember = await makeTargetMember("for-member-1-other");
+
+      const topupA = await createTopup(actor.id, {
+        memberId: member.id,
+        year: 2026,
+        otpNumber: 1,
+        amount: 100,
+        paidDate: new Date("2026-01-01"),
+      });
+      const topupB = await createTopup(actor.id, {
+        memberId: member.id,
+        year: 2026,
+        otpNumber: 2,
+        amount: 100,
+        paidDate: new Date("2026-06-01"),
+      });
+      await createTopup(actor.id, {
+        memberId: otherMember.id,
+        year: 2026,
+        otpNumber: 1,
+        amount: 999,
+        paidDate: new Date("2026-01-01"),
+      });
+
+      const topups = await listTopupsForMember(member.id);
+
+      expect(topups.map((t: AnnualTopupModel) => t.id)).toEqual([topupB.id, topupA.id]);
+      expect(topups.every((t: AnnualTopupModel) => t.memberId === member.id)).toBe(true);
     });
   });
 });

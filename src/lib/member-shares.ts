@@ -86,3 +86,20 @@ export async function listSharesForMembers(memberIds: string[]) {
 
   return byMember;
 }
+
+// Past months must always calculate against the share count effective at
+// that time (CLAUDE.md), so "current standing" is never just the newest
+// row — it's the latest row whose effectiveFrom hasn't passed asOfDate yet.
+export function getShareCountAsOf(
+  shares: { shareCount: number; effectiveFrom: Date }[],
+  asOfDate: Date,
+): number {
+  let latest: { shareCount: number; effectiveFrom: Date } | null = null;
+  for (const share of shares) {
+    if (share.effectiveFrom > asOfDate) continue;
+    if (!latest || share.effectiveFrom > latest.effectiveFrom) {
+      latest = share;
+    }
+  }
+  return latest?.shareCount ?? 0;
+}

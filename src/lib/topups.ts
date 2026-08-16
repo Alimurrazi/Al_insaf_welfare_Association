@@ -67,6 +67,13 @@ export async function listTopups() {
   });
 }
 
+export async function listTopupsForMember(memberId: string) {
+  return prisma.annualTopup.findMany({
+    where: { memberId },
+    orderBy: [{ year: "desc" }, { otpNumber: "desc" }],
+  });
+}
+
 export async function createTopup(actorId: string, input: TopupInput) {
   return prisma.$transaction(async (tx) => {
     const member = await tx.member.findUnique({ where: { id: input.memberId } });

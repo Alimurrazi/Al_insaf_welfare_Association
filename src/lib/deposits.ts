@@ -67,6 +67,13 @@ export async function listDeposits() {
   });
 }
 
+export async function listDepositsForMember(memberId: string) {
+  return prisma.monthlyDeposit.findMany({
+    where: { memberId },
+    orderBy: [{ year: "desc" }, { month: "desc" }],
+  });
+}
+
 export async function createDeposit(actorId: string, input: DepositInput) {
   return prisma.$transaction(async (tx) => {
     const member = await tx.member.findUnique({ where: { id: input.memberId } });

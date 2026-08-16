@@ -5,6 +5,7 @@ import {
   createDeposit,
   DepositNotFoundError,
   listDeposits,
+  listDepositsForMember,
   updateDeposit,
   validateDepositInput,
 } from "./deposits";
@@ -306,6 +307,41 @@ describe("deposits service", () => {
         depositB.id,
         depositA.id,
       ]);
+    });
+  });
+
+  describe("listDepositsForMember", () => {
+    it("returns only the given member's deposits, ordered most-recent first", async () => {
+      const actor = await makeActor("for-member-1");
+      const member = await makeTargetMember("for-member-1");
+      const otherMember = await makeTargetMember("for-member-1-other");
+
+      const depositA = await createDeposit(actor.id, {
+        memberId: member.id,
+        month: 1,
+        year: 2026,
+        amount: 100,
+        paidDate: new Date("2026-01-01"),
+      });
+      const depositB = await createDeposit(actor.id, {
+        memberId: member.id,
+        month: 3,
+        year: 2026,
+        amount: 100,
+        paidDate: new Date("2026-03-01"),
+      });
+      await createDeposit(actor.id, {
+        memberId: otherMember.id,
+        month: 2,
+        year: 2026,
+        amount: 999,
+        paidDate: new Date("2026-02-01"),
+      });
+
+      const deposits = await listDepositsForMember(member.id);
+
+      expect(deposits.map((d: MonthlyDepositModel) => d.id)).toEqual([depositB.id, depositA.id]);
+      expect(deposits.every((d: MonthlyDepositModel) => d.memberId === member.id)).toBe(true);
     });
   });
 });
