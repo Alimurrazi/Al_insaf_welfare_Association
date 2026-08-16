@@ -1,0 +1,144 @@
+import { afterAll, describe, expect, it } from "vitest";
+import { prisma } from "./prisma";
+import { MemberNotFoundError } from "./members";
+import { addMemberShare, listMemberShares, validateMemberShareInput } from "./member-shares";
+import type { MemberShareModel } from "@/generated/prisma/models/MemberShare";
+
+// Distinguishing prefix so cleanup can find (and only find) rows this file created,
+// following the existing pattern in `./members.test.ts`.
+const PREFIX = "member-shares-svc-test-";
+
+async function makeActor(suffix: string) {
+  return prisma.member.create({
+    data: { name: `${PREFIX}actor-${suffix}`, email: `${PREFIX}actor-${suffix}@example.com`, role: "ADMIN" },
+  });
+}
+
+async function makeTargetMember(suffix: string) {
+  return prisma.member.create({
+    data: { name: `${PREFIX}target-${suffix}`, email: `${PREFIX}target-${suffix}@example.com`, role: "MEMBER" },
+  });
+}
+
+describe("member-shares service", () => {
+  afterAll(async () => {
+    // ActivityLog and MemberShare rows reference members via required FKs,
+    // so delete them first, in FK-safe order.
+    await prisma.activityLog.deleteMany({ where: { actor: { email: { startsWith: PREFIX } } } });
+    await prisma.memberShare.deleteMany({ where: { member: { email: { startsWith: PREFIX } } } });
+    await prisma.member.deleteMany({ where: { email: { startsWith: PREFIX } } });
+    await prisma.$disconnect();
+  });
+
+  describe("validateMemberShareInput", () => {
+    it("rejects a missing shareCount", () => {
+      const error = validateMemberShareInput({ effectiveFrom: "2026-01-01" });
+      expect(typeof error).toBe("string");
+    });
+
+    it("rejects a zero shareCount", () => {
+      const error = validateMemberShareInput({ shareCount: 0, effectiveFrom: "2026-01-01" });
+      expect(typeof error).toBe("string");
+    });
+
+    it("rejects a negative shareCount", () => {
+      const error = validateMemberShareInput({ shareCount: -3, effectiveFrom: "2026-01-01" });
+      expect(typeof error).toBe("string");
+    });
+
+    it("rejects a non-integer shareCount", () => {
+      const error = validateMemberShareInput({ shareCount: 1.5, effectiveFrom: "2026-01-01" });
+      expect(typeof error).toBe("string");
+    });
+
+    it("rejects a missing effectiveFrom", () => {
+      const error = validateMemberShareInput({ shareCount: 2 });
+      expect(typeof error).toBe("string");
+    });
+
+    it("rejects an invalid effectiveFrom", () => {
+      const error = validateMemberShareInput({ shareCount: 2, effectiveFrom: "not-a-date" });
+      expect(typeof error).toBe("string");
+    });
+
+    it("accepts a valid combination with a string date", () => {
+      const error = validateMemberShareInput({ shareCount: 2, effectiveFrom: "2026-01-01" });
+      expect(error).toBeNull();
+    });
+
+    it("accepts a valid combination with a Date instance", () => {
+      const error = validateMemberShareInput({ shareCount: 2, effectiveFrom: new Date("2026-01-01") });
+      expect(error).toBeNull();
+    });
+  });
+
+  describe("addMemberShare", () => {
+    it("creates the row and writes a correct ActivityLog row", async () => {
+      const actor = await makeActor("add-1");
+      const member = await makeTargetMember("add-1");
+      const effectiveFrom = new Date("2026-01-01");
+
+      const created = await addMemberShare(actor.id, member.id, { shareCount: 3, effectiveFrom });
+
+      expect(created.memberId).toBe(member.id);
+      expect(created.shareCount).toBe(3);
+      expect(new Date(created.effectiveFrom).toISOString()).toBe(effectiveFrom.toISOString());
+
+      const log = await prisma.activityLog.findFirst({
+        where: { entityType: "MemberShare", entityId: created.id, action: "CREATE" },
+      });
+
+      expect(log).not.toBeNull();
+      expect(log?.actorId).toBe(actor.id);
+      expect(log?.oldValue).toBeNull();
+      expect(log?.newValue).toMatchObject({ shareCount: 3 });
+    });
+
+    it("rejects an unknown memberId", async () => {
+      const actor = await makeActor("add-unknown");
+
+      await expect(
+        addMemberShare(actor.id, "does-not-exist-id", { shareCount: 2, effectiveFrom: new Date("2026-01-01") }),
+      ).rejects.toThrow(MemberNotFoundError);
+    });
+
+    it("creates two independent rows for the same member with different effectiveFrom values (append-only)", async () => {
+      const actor = await makeActor("add-append");
+      const member = await makeTargetMember("add-append");
+
+      const first = await addMemberShare(actor.id, member.id, {
+        shareCount: 1,
+        effectiveFrom: new Date("2025-01-01"),
+      });
+      const second = await addMemberShare(actor.id, member.id, {
+        shareCount: 5,
+        effectiveFrom: new Date("2026-01-01"),
+      });
+
+      expect(first.id).not.toBe(second.id);
+
+      const rows = await prisma.memberShare.findMany({ where: { memberId: member.id } });
+      expect(rows).toHaveLength(2);
+      expect(rows.map((r: MemberShareModel) => r.shareCount).sort()).toEqual([1, 5]);
+    });
+  });
+
+  describe("listMemberShares", () => {
+    it("returns only the given member's shares, ordered most-recent-effectiveFrom-first", async () => {
+      const actor = await makeActor("list-1");
+      const member = await makeTargetMember("list-1");
+      const otherMember = await makeTargetMember("list-1-other");
+
+      await addMemberShare(actor.id, member.id, { shareCount: 1, effectiveFrom: new Date("2024-01-01") });
+      await addMemberShare(actor.id, member.id, { shareCount: 2, effectiveFrom: new Date("2026-01-01") });
+      await addMemberShare(actor.id, member.id, { shareCount: 3, effectiveFrom: new Date("2025-01-01") });
+      await addMemberShare(actor.id, otherMember.id, { shareCount: 99, effectiveFrom: new Date("2026-06-01") });
+
+      const shares = await listMemberShares(member.id);
+
+      expect(shares).toHaveLength(3);
+      expect(shares.map((s: MemberShareModel) => s.shareCount)).toEqual([2, 3, 1]);
+      expect(shares.every((s: MemberShareModel) => s.memberId === member.id)).toBe(true);
+    });
+  });
+});

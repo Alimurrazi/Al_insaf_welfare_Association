@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { createMember, listMembers, updateMember } from "@/lib/members";
+import { addMemberShare, listMemberShares } from "@/lib/member-shares";
 import type { Role } from "@/generated/prisma/enums";
 import { MemberRow } from "./member-row";
 import { inputClasses, primaryButtonClasses } from "./styles";
@@ -41,9 +42,25 @@ async function editMember(formData: FormData) {
   revalidatePath("/members");
 }
 
+async function addShare(formData: FormData) {
+  "use server";
+  const session = await requireAdminSession();
+
+  const memberId = String(formData.get("memberId") ?? "");
+  await addMemberShare(session.user.id, memberId, {
+    shareCount: Number(formData.get("shareCount")),
+    effectiveFrom: String(formData.get("effectiveFrom")),
+  });
+
+  revalidatePath("/members");
+}
+
 export default async function MembersPage() {
   await requireAdminSession();
   const members = await listMembers();
+  const shareHistories = new Map(
+    await Promise.all(members.map(async (m) => [m.id, await listMemberShares(m.id)] as const)),
+  );
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">
@@ -81,7 +98,13 @@ export default async function MembersPage() {
         </p>
         <ul className="flex flex-col gap-2">
           {members.map((member) => (
-            <MemberRow key={member.id} member={member} editMember={editMember} />
+            <MemberRow
+              key={member.id}
+              member={member}
+              editMember={editMember}
+              shares={shareHistories.get(member.id) ?? []}
+              addShare={addShare}
+            />
           ))}
         </ul>
       </section>
