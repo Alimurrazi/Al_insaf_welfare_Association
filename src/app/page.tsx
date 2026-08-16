@@ -30,6 +30,12 @@ export default async function Home() {
         >
           Expenses
         </Link>
+        <Link
+          href="/activity"
+          className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+        >
+          Activity feed
+        </Link>
       </nav>
 
       {user.role === "ADMIN" && (
