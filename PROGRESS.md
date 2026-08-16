@@ -13,17 +13,24 @@ Tracks the build roadmap step by step. Check items off as they're completed; kee
 
 ## Before any feature code
 
-- [ ] Prisma schema — define the 6 entities (members, member_shares, monthly_deposits, annual_topups, expenses, activity_log)
-- [ ] Decide dev database — local Postgres (`npx prisma dev`), Docker, or a cloud dev DB (Neon/Vercel Postgres)
-- [ ] Run first migration, generate Prisma Client
-- [ ] Auth setup — NextAuth + Google provider, signIn callback checked against `members` allow-list
-- [ ] Test scaffolding — Vitest wired to test DB, Playwright config, one smoke test of each
-- [ ] Hooks — lint/type-check on edit, block destructive shell commands, run tests before commit
+- [x] Prisma schema — define the 6 entities (members, member_shares, monthly_deposits, annual_topups, expenses, activity_log)
+- [x] Decide dev database — using `npx prisma dev` (local Postgres, requires Node 22+)
+- [x] Run first migration, generate Prisma Client
+- [x] Auth setup — NextAuth + Google provider, signIn callback checked against `members` allow-list
+- [x] Test scaffolding — Vitest wired to test DB, Playwright config, one smoke test of each
+- [x] Hooks — lint/type-check on edit, block destructive shell commands, run tests before commit
+
+## Design system
+
+- [x] Design-system artifact (colors, type scale, spacing, button/input/card/table variants) — "Insaf Ledger", built as a Claude artifact per `flow-mapping.txt` step 2; approved
+- [x] Retrofit existing screens (sign-in, home, manage members) to the approved design system — fonts self-hosted via `next/font/local` (`src/fonts.ts`), tokens in `globals.css`, shared `RoleBadge` component
+- [x] Lock approved tokens/component rules into `CLAUDE.md` ("UI conventions" section)
 
 ## Feature build (screen by screen, test-first)
 
-- [ ] Manage members (admin-only)
-- [ ] Add/edit deposit entry
+- [x] Manage members (admin-only) — profile only (name/email/role); no removal/deactivation, schema has no status field for it
+- [x] Manage member shares (admin-only) — record a new share-count row (with effective-from date) for a member; left over from the members screen, kept separate since member_shares is an append-only history table with its own effective-dating logic
+- [x] Add/edit deposit entry
 - [ ] Add/edit annual top-up entry
 - [ ] Add/edit expense entry
 - [ ] Ledger grid (shared)
