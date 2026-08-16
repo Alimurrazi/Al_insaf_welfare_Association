@@ -25,6 +25,12 @@ export default async function Home() {
           >
             Manage members
           </Link>
+          <Link
+            href="/deposits"
+            className="text-accent underline underline-offset-4 transition-colors hover:text-accent-strong hover:no-underline"
+          >
+            Manage deposits
+          </Link>
         </nav>
       )}
 

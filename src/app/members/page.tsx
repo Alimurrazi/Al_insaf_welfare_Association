@@ -2,10 +2,10 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { createMember, listMembers, updateMember } from "@/lib/members";
-import { addMemberShare, listMemberShares } from "@/lib/member-shares";
+import { addMemberShare, listSharesForMembers } from "@/lib/member-shares";
 import type { Role } from "@/generated/prisma/enums";
 import { MemberRow } from "./member-row";
-import { inputClasses, primaryButtonClasses } from "./styles";
+import { inputClasses, primaryButtonClasses } from "@/components/styles";
 
 async function requireAdminSession() {
   const session = await auth();
@@ -58,9 +58,7 @@ async function addShare(formData: FormData) {
 export default async function MembersPage() {
   await requireAdminSession();
   const members = await listMembers();
-  const shareHistories = new Map(
-    await Promise.all(members.map(async (m) => [m.id, await listMemberShares(m.id)] as const)),
-  );
+  const shareHistories = await listSharesForMembers(members.map((m) => m.id));
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">

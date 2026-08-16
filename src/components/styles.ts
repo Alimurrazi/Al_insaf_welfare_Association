@@ -1,6 +1,7 @@
-// Shared between page.tsx (server) and member-row.tsx (client) — kept in its
-// own module with no server-only imports so importing it doesn't drag
-// next/cache, @/auth, or @/lib/members into the client bundle.
+// Shared across every admin screen's page.tsx (server) and *-row.tsx (client)
+// components — kept in its own module with no server-only imports so
+// importing it doesn't drag next/cache, @/auth, or lib modules into the
+// client bundle.
 export const inputClasses =
   "rounded-md border border-line bg-surface px-2 py-1 text-sm text-ink focus-visible:outline-2 focus-visible:outline-accent focus-visible:border-accent";
 export const primaryButtonClasses =

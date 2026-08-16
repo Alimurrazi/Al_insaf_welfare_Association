@@ -3,7 +3,7 @@
 import { useState } from "react";
 import type { Role } from "@/generated/prisma/enums";
 import { RoleBadge } from "@/components/role-badge";
-import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "./styles";
+import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/styles";
 
 interface MemberShareEntry {
   id: string;

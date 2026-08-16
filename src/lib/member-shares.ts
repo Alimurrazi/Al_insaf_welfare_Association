@@ -59,3 +59,30 @@ export async function listMemberShares(memberId: string) {
     orderBy: { effectiveFrom: "desc" },
   });
 }
+
+// One query for every member's history rather than one query per member —
+// the members page needs all of them at once, and firing N concurrent
+// queries at the local `prisma dev` engine exhausts its connection pool
+// under load (see TESTING.md).
+export async function listSharesForMembers(memberIds: string[]) {
+  const byMember = new Map<string, Awaited<ReturnType<typeof listMemberShares>>>();
+  if (memberIds.length === 0) {
+    return byMember;
+  }
+
+  const shares = await prisma.memberShare.findMany({
+    where: { memberId: { in: memberIds } },
+    orderBy: { effectiveFrom: "desc" },
+  });
+
+  for (const share of shares) {
+    const existing = byMember.get(share.memberId);
+    if (existing) {
+      existing.push(share);
+    } else {
+      byMember.set(share.memberId, [share]);
+    }
+  }
+
+  return byMember;
+}

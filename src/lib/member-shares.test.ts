@@ -1,7 +1,12 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "./prisma";
 import { MemberNotFoundError } from "./members";
-import { addMemberShare, listMemberShares, validateMemberShareInput } from "./member-shares";
+import {
+  addMemberShare,
+  listMemberShares,
+  listSharesForMembers,
+  validateMemberShareInput,
+} from "./member-shares";
 import type { MemberShareModel } from "@/generated/prisma/models/MemberShare";
 
 // Distinguishing prefix so cleanup can find (and only find) rows this file created,
@@ -139,6 +144,30 @@ describe("member-shares service", () => {
       expect(shares).toHaveLength(3);
       expect(shares.map((s: MemberShareModel) => s.shareCount)).toEqual([2, 3, 1]);
       expect(shares.every((s: MemberShareModel) => s.memberId === member.id)).toBe(true);
+    });
+  });
+
+  describe("listSharesForMembers", () => {
+    it("fetches multiple members' histories in a single query, grouped and ordered per member", async () => {
+      const actor = await makeActor("list-multi");
+      const memberA = await makeTargetMember("list-multi-a");
+      const memberB = await makeTargetMember("list-multi-b");
+      const memberC = await makeTargetMember("list-multi-c");
+
+      await addMemberShare(actor.id, memberA.id, { shareCount: 1, effectiveFrom: new Date("2024-01-01") });
+      await addMemberShare(actor.id, memberA.id, { shareCount: 2, effectiveFrom: new Date("2026-01-01") });
+      await addMemberShare(actor.id, memberB.id, { shareCount: 5, effectiveFrom: new Date("2025-01-01") });
+
+      const byMember = await listSharesForMembers([memberA.id, memberB.id, memberC.id]);
+
+      expect(byMember.get(memberA.id)?.map((s: MemberShareModel) => s.shareCount)).toEqual([2, 1]);
+      expect(byMember.get(memberB.id)?.map((s: MemberShareModel) => s.shareCount)).toEqual([5]);
+      expect(byMember.get(memberC.id) ?? []).toEqual([]);
+    });
+
+    it("returns an empty map for an empty member id list", async () => {
+      const byMember = await listSharesForMembers([]);
+      expect(byMember.size).toBe(0);
     });
   });
 });
