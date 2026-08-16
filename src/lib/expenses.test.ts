@@ -3,7 +3,9 @@ import { prisma } from "./prisma";
 import {
   createExpense,
   ExpenseNotFoundError,
+  filterExpenses,
   listExpenses,
+  sumExpenseAmounts,
   updateExpense,
   validateExpenseInput,
 } from "./expenses";
@@ -243,6 +245,61 @@ describe("expenses service", () => {
         expenseB.id,
         expenseA.id,
       ]);
+    });
+  });
+
+  describe("filterExpenses", () => {
+    // Pure functions over an already-fetched array (e.g. from
+    // `listExpenses`) — no DB access, so plain fixture objects suffice.
+    function expense(id: string, category: string, dateStr: string, amount: number) {
+      return { id, category, date: new Date(dateStr), amount } as unknown as ExpenseModel;
+    }
+
+    const fixtures = [
+      expense("a", "Land survey", "2025-06-01", 100),
+      expense("b", "Legal fees", "2026-01-01", 200),
+      expense("c", "Land survey", "2026-03-01", 300),
+    ];
+
+    it("returns everything when no filter is given", () => {
+      expect(filterExpenses(fixtures, {}).map((e) => e.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("filters by category only", () => {
+      expect(filterExpenses(fixtures, { category: "Land survey" }).map((e) => e.id)).toEqual([
+        "a",
+        "c",
+      ]);
+    });
+
+    it("filters by year only", () => {
+      expect(filterExpenses(fixtures, { year: 2026 }).map((e) => e.id)).toEqual(["b", "c"]);
+    });
+
+    it("filters by both category and year", () => {
+      expect(
+        filterExpenses(fixtures, { category: "Land survey", year: 2026 }).map((e) => e.id),
+      ).toEqual(["c"]);
+    });
+
+    it("returns an empty array when nothing matches", () => {
+      expect(filterExpenses(fixtures, { category: "Nonexistent" })).toEqual([]);
+    });
+  });
+
+  describe("sumExpenseAmounts", () => {
+    function expense(amount: number) {
+      return { amount } as unknown as ExpenseModel;
+    }
+
+    it("sums the amounts as a plain number", () => {
+      const total = sumExpenseAmounts([expense(100), expense(50.5), expense(25)]);
+      expect(typeof total).toBe("number");
+      expect(total).toBe(175.5);
+    });
+
+    it("returns 0 for an empty array", () => {
+      expect(sumExpenseAmounts([])).toBe(0);
     });
   });
 });

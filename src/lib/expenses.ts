@@ -56,6 +56,25 @@ export async function listExpenses() {
   });
 }
 
+// Pure filter/total helpers over an already-fetched list — the expenses
+// page filters by category/year for display, which at this app's scale
+// (15 members) is simpler and cheaper done in memory than as a second
+// DB round trip per filter change.
+export function filterExpenses<T extends { category: string; date: Date }>(
+  expenses: T[],
+  filter: { category?: string; year?: number },
+): T[] {
+  return expenses.filter((expense) => {
+    if (filter.category && expense.category !== filter.category) return false;
+    if (filter.year && new Date(expense.date).getFullYear() !== filter.year) return false;
+    return true;
+  });
+}
+
+export function sumExpenseAmounts<T extends { amount: unknown }>(expenses: T[]): number {
+  return expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
+}
+
 export async function createExpense(actorId: string, input: ExpenseInput) {
   return prisma.$transaction(async (tx) => {
     const expense = await tx.expense.create({

@@ -13,7 +13,7 @@ const PREFIX = "e2e-expenses-test-";
 const ADMIN_EMAIL = `${PREFIX}admin@example.com`;
 const MEMBER_EMAIL = `${PREFIX}member@example.com`;
 
-test.describe("/expenses access boundary and flow", () => {
+test.describe("/expenses — shared, filterable, admin-only write", () => {
   test.describe.configure({ mode: "serial" });
 
   const client = new Client({ connectionString: process.env.DATABASE_URL });
@@ -41,19 +41,20 @@ test.describe("/expenses access boundary and flow", () => {
     await client.end();
   });
 
-  test("an ADMIN session sees the manage-expenses heading and form", async ({ page, context }) => {
+  test("an ADMIN session sees the add-expense form", async ({ page, context }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
     const response = await page.goto("/expenses");
 
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: /expenses/i })).toBeVisible();
-    await expect(page.getByLabel(/category/i)).toBeVisible();
-    await expect(page.getByLabel(/amount/i)).toBeVisible();
+    await expect(page.getByRole("heading", { name: "Expenses" })).toBeVisible();
+    const addForm = page.locator("form", { hasText: "Add expense" });
+    await expect(addForm.getByLabel("Category")).toBeVisible();
+    await expect(addForm.getByLabel("Amount")).toBeVisible();
   });
 
-  test("a MEMBER session is rejected with a 404, not just visually hidden", async ({
+  test("a MEMBER session can view expenses read-only — no add form, no edit buttons", async ({
     page,
     context,
   }) => {
@@ -62,11 +63,18 @@ test.describe("/expenses access boundary and flow", () => {
 
     const response = await page.goto("/expenses");
 
-    expect(response?.status()).toBe(404);
-    await expect(page.getByText(/this page could not be found/i)).toBeVisible();
+    expect(response?.status()).toBe(200);
+    await expect(page.getByRole("heading", { name: "Expenses" })).toBeVisible();
+    await expect(page.locator("form", { hasText: "Add expense" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "Edit" })).toHaveCount(0);
+    // The filter form is still visible to Members — browsing is shared.
+    await expect(page.locator("form", { hasText: "Apply" })).toBeVisible();
   });
 
-  test("an admin can add an expense and then edit it", async ({ page, context }) => {
+  test("an admin can add an expense, edit it, and the running total updates", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
@@ -78,6 +86,8 @@ test.describe("/expenses access boundary and flow", () => {
     await addForm.getByLabel("Amount").fill("500");
     await addForm.getByLabel("Note").fill("Surveyor fee");
     await addForm.getByRole("button", { name: "Add expense" }).click();
+
+    await expect(page.getByText("Total: $500.00")).toBeVisible();
 
     // Scoped positionally rather than by text: unlike deposits/topups, an
     // expense row has no <select> (whose option text stays in the DOM even
@@ -95,5 +105,31 @@ test.describe("/expenses access boundary and flow", () => {
 
     await expect(row).toContainText("550.00");
     await expect(row).toContainText("Surveyor fee (corrected)");
+    await expect(page.getByText("Total: $550.00")).toBeVisible();
+  });
+
+  test("filtering by category narrows the list and updates the running total", async ({
+    page,
+    context,
+  }) => {
+    const cookie = await createSessionCookie(ADMIN_EMAIL);
+    await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
+
+    await page.goto("/expenses");
+    const addForm = page.locator("form", { hasText: "Add expense" });
+    await addForm.getByLabel("Date").fill("2026-07-01");
+    await addForm.getByLabel("Category").fill("Legal fees");
+    await addForm.getByLabel("Amount").fill("300");
+    await addForm.getByRole("button", { name: "Add expense" }).click();
+
+    // Two expenses now exist ("Land survey" 550 from the prior test, "Legal
+    // fees" 300 just added) — filter down to just Legal fees.
+    const filterForm = page.locator("form", { hasText: "Apply" });
+    await filterForm.getByLabel("Category").selectOption("Legal fees");
+    await filterForm.getByRole("button", { name: "Apply" }).click();
+
+    await expect(page.getByText("1 expense", { exact: true })).toBeVisible();
+    await expect(page.getByText("Total: $300.00")).toBeVisible();
+    await expect(page.locator("main ul li")).toHaveCount(1);
   });
 });

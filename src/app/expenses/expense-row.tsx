@@ -11,7 +11,10 @@ interface ExpenseRowProps {
     amount: number;
     note: string | null;
   };
-  editExpense: (formData: FormData) => Promise<void>;
+  // Members get a read-only row (no Edit button, no mutation capability) —
+  // omit this prop entirely for a Member-role viewer rather than passing a
+  // server action that would just reject at the auth boundary anyway.
+  editExpense?: (formData: FormData) => Promise<void>;
 }
 
 function formatDate(date: Date) {
@@ -23,16 +26,18 @@ function formatDate(date: Date) {
 export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
   const [editing, setEditing] = useState(false);
 
-  if (!editing) {
+  if (!editing || !editExpense) {
     return (
       <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
         <span className="flex items-center gap-2 font-mono tabular-nums">
           {formatDate(expense.date)} — {expense.category} — ${expense.amount.toFixed(2)}
           {expense.note ? ` — ${expense.note}` : ""}
         </span>
-        <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
-          Edit
-        </button>
+        {editExpense && (
+          <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
+            Edit
+          </button>
+        )}
       </li>
     );
   }
