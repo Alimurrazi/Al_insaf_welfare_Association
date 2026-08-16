@@ -1,3 +1,4 @@
+import Link from "next/link";
 import { auth, signOut } from "@/auth";
 
 export default async function Home() {
@@ -15,6 +16,14 @@ export default async function Home() {
           </span>
         </p>
       </div>
+
+      {user.role === "ADMIN" && (
+        <nav className="flex flex-col items-center gap-2 text-sm">
+          <Link href="/members" className="underline underline-offset-4 hover:no-underline">
+            Manage members
+          </Link>
+        </nav>
+      )}
 
       <form
         action={async () => {
