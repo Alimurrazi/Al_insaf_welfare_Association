@@ -31,6 +31,33 @@ Six entities — see the report §5 for full field lists:
 - `expenses` — id, date, category, amount, note, created_by
 - `activity_log` — id, actor_id, action, entity_type, entity_id, old_value, new_value, created_at
 
+## UI conventions — Insaf Ledger design system
+
+Approved design system (see the "Insaf Ledger" artifact for the full reference/rationale). All screens must use these tokens instead of ad-hoc Tailwind values — this keeps the app looking like one system instead of drifting screen to screen.
+
+**Fonts** (self-hosted via `next/font/local`, defined in `src/fonts.ts`, wired into Tailwind's `--font-sans`/`--font-display`/`--font-mono` in `globals.css`):
+- `font-display` (Fraunces, 600/700 + italic 500) — headings only, used sparingly.
+- `font-sans` (Public Sans, 400/600/700) — body copy, forms, UI text. This is the default body font.
+- `font-mono` (IBM Plex Mono, 400/500) — amounts, dates, badges, section eyebrows/labels; use `tabular-nums` wherever digits line up in columns.
+
+**Colors** (CSS custom properties in `globals.css`, light values in `:root`, dark values under `@media (prefers-color-scheme: dark)`; exposed as Tailwind utilities via `@theme inline` — `bg-accent`, `text-ink-soft`, etc.):
+- `paper` / `surface` — page background / card & input background.
+- `ink` / `ink-soft` — primary / secondary text.
+- `line` — hairline borders.
+- `accent` / `accent-strong` / `accent-soft` — the one accent (deep emerald). Links, primary buttons, focus rings, row hover. `-strong` for hover/active, `-soft` for tinted backgrounds (e.g. the MEMBER badge).
+- `gold` / `gold-soft` — semantic, ADMIN badge only. Never a second accent.
+- `danger` / `danger-soft` — semantic, errors only (e.g. the sign-in "AccessDenied" message, 400/409 API error states).
+
+**Type scale**: Tailwind's default `text-xs`/`text-sm`/`text-base` are unchanged (they already matched); `text-lg`/`text-xl`/`text-2xl` are overridden in `globals.css` to 1.25rem/1.75rem/2.5rem to give the display face more presence.
+
+**Spacing**: Tailwind's default numeric scale (`p-4`, `gap-6`, etc.) maps directly — no custom spacing tokens needed.
+
+**Components**:
+- Buttons: primary = `bg-accent text-white hover:bg-accent-strong` (solid, for the one primary action per form); secondary = `border border-line hover:border-accent hover:text-accent` (for Cancel/Edit and anything not the primary action).
+- Inputs: `border-line bg-surface`, `focus-visible:outline-accent`.
+- Badges: pill-shaped, `font-mono text-xs`, `bg-gold-soft text-gold` (ADMIN) or `bg-accent-soft text-accent` (MEMBER) — see `src/components/role-badge.tsx`.
+- Radius: Tailwind's `rounded-md` (0.375rem) everywhere — no custom radius token.
+
 ## Testing — test-first, always
 
 - Write the test before the implementation, as a **separate pass from the implementation code** (e.g. a distinct subagent/session) so tests aren't shaped to match code that already exists. Confirm a new test fails for the right reason before implementing against it.

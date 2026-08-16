@@ -4,6 +4,7 @@ import { auth } from "@/auth";
 import { createMember, listMembers, updateMember } from "@/lib/members";
 import type { Role } from "@/generated/prisma/enums";
 import { MemberRow } from "./member-row";
+import { inputClasses, primaryButtonClasses } from "./styles";
 
 async function requireAdminSession() {
   const session = await auth();
@@ -40,58 +41,47 @@ async function editMember(formData: FormData) {
   revalidatePath("/members");
 }
 
-const inputClasses =
-  "rounded border border-black/[.08] bg-transparent px-2 py-1 text-sm dark:border-white/[.145]";
-const buttonClasses =
-  "rounded border border-black/[.08] px-3 py-1 text-sm transition-colors hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-white/[.08]";
-
 export default async function MembersPage() {
   await requireAdminSession();
   const members = await listMembers();
 
   return (
     <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">
-      <h1 className="text-xl font-semibold">Manage Members</h1>
+      <h1 className="font-display text-xl font-bold text-ink">Manage Members</h1>
 
       <section className="flex flex-col gap-3">
-        <h2 className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">
           Add a member
         </h2>
         <form action={addMember} className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm text-ink">
             Name
             <input name="name" type="text" required className={inputClasses} />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm text-ink">
             Email
             <input name="email" type="email" required className={inputClasses} />
           </label>
-          <label className="flex flex-col gap-1 text-sm">
+          <label className="flex flex-col gap-1 text-sm text-ink">
             Role
             <select name="role" defaultValue="MEMBER" className={inputClasses}>
               <option value="MEMBER">MEMBER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </label>
-          <button type="submit" className={buttonClasses}>
+          <button type="submit" className={primaryButtonClasses}>
             Add member
           </button>
         </form>
       </section>
 
       <section className="flex flex-col gap-3">
-        <p className="text-sm font-medium text-zinc-600 dark:text-zinc-400">
+        <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
           Directory
         </p>
         <ul className="flex flex-col gap-2">
           {members.map((member) => (
-            <MemberRow
-              key={member.id}
-              member={member}
-              editMember={editMember}
-              inputClasses={inputClasses}
-              buttonClasses={buttonClasses}
-            />
+            <MemberRow key={member.id} member={member} editMember={editMember} />
           ))}
         </ul>
       </section>
