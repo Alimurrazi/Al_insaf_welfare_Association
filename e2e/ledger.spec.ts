@@ -58,7 +58,7 @@ test.describe("/ledger — shared, read-only for both roles", () => {
     const response = await page.goto("/ledger?year=2026");
 
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: /ledger grid/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /logbook/i })).toBeVisible();
     const row = page.locator("tr", { hasText: TARGET_NAME });
     await expect(row).toContainText("3000.00");
   });
@@ -73,7 +73,7 @@ test.describe("/ledger — shared, read-only for both roles", () => {
     const response = await page.goto("/ledger?year=2026");
 
     expect(response?.status()).toBe(200);
-    await expect(page.getByRole("heading", { name: /ledger grid/i })).toBeVisible();
+    await expect(page.getByRole("heading", { name: /logbook/i })).toBeVisible();
     const row = page.locator("tr", { hasText: TARGET_NAME });
     await expect(row).toContainText("3000.00");
   });

@@ -1,7 +1,18 @@
 "use client";
 
 import { useState } from "react";
-import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/styles";
+import {
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+  rowAmountClasses,
+  rowMutedClasses,
+  rowNoteClasses,
+  rowPrimaryClasses,
+  secondaryButtonClasses,
+} from "@/components/styles";
 
 interface ExpenseRowProps {
   expense: {
@@ -28,10 +39,13 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
 
   if (!editing || !editExpense) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
-        <span className="flex items-center gap-2 font-mono tabular-nums">
-          {formatDate(expense.date)} — {expense.category} — Tk {expense.amount.toFixed(2)}
-          {expense.note ? ` — ${expense.note}` : ""}
+      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
+        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
+          <span className={rowMutedClasses}>{formatDate(expense.date)} —</span>
+          <span className={rowPrimaryClasses}>{expense.category}</span>
+          <span className={rowMutedClasses}>—</span>
+          <span className={rowAmountClasses}>Tk {expense.amount.toFixed(2)}</span>
+          {expense.note && <span className={rowNoteClasses}>— {expense.note}</span>}
         </span>
         {editExpense && (
           <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
@@ -43,16 +57,16 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-3">
+    <li className="rounded-md border border-line bg-surface p-4">
       <form
         action={async (formData) => {
           await editExpense(formData);
           setEditing(false);
         }}
-        className="flex flex-wrap items-end gap-3"
+        className={formClasses}
       >
         <input type="hidden" name="id" value={expense.id} />
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Date
           <input
             name="date"
@@ -62,11 +76,11 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Category
           <input name="category" type="text" defaultValue={expense.category} required className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Amount
           <input
             name="amount"
@@ -78,16 +92,18 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Note
           <input name="note" type="text" defaultValue={expense.note ?? ""} className={inputClasses} />
         </label>
-        <button type="submit" className={primaryButtonClasses}>
-          Save
-        </button>
-        <button type="button" onClick={() => setEditing(false)} className={secondaryButtonClasses}>
-          Cancel
-        </button>
+        <div className={`flex gap-3 ${formActionsClasses}`}>
+          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
+            Save
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
+            Cancel
+          </button>
+        </div>
       </form>
     </li>
   );

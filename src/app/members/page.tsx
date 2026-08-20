@@ -5,7 +5,13 @@ import { createMember, listMembers, updateMember } from "@/lib/members";
 import { addMemberShare, listSharesForMembers } from "@/lib/member-shares";
 import type { Role } from "@/generated/prisma/enums";
 import { MemberRow } from "./member-row";
-import { inputClasses, primaryButtonClasses } from "@/components/styles";
+import {
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+} from "@/components/styles";
 
 async function requireAdminSession() {
   const session = await auth();
@@ -61,30 +67,30 @@ export default async function MembersPage() {
   const shareHistories = await listSharesForMembers(members.map((m) => m.id));
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">
+    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
       <h1 className="font-display text-xl font-bold text-ink">Manage Members</h1>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">
           Add a member
         </h2>
-        <form action={addMember} className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm text-ink">
+        <form action={addMember} className={formClasses}>
+          <label className={fieldLabelClasses}>
             Name
             <input name="name" type="text" required className={inputClasses} />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-ink">
+          <label className={fieldLabelClasses}>
             Email
             <input name="email" type="email" required className={inputClasses} />
           </label>
-          <label className="flex flex-col gap-1 text-sm text-ink">
+          <label className={fieldLabelClasses}>
             Role
             <select name="role" defaultValue="MEMBER" className={inputClasses}>
               <option value="MEMBER">MEMBER</option>
               <option value="ADMIN">ADMIN</option>
             </select>
           </label>
-          <button type="submit" className={primaryButtonClasses}>
+          <button type="submit" className={`${primaryButtonClasses} ${formActionsClasses} w-full`}>
             Add member
           </button>
         </form>

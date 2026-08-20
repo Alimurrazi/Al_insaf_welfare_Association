@@ -23,7 +23,7 @@ export default async function Home() {
         </p>
       </div>
 
-      <section className="flex flex-wrap justify-center gap-6 rounded-md border border-line bg-surface p-4">
+      <section className="flex flex-wrap justify-center gap-8 rounded-md border border-line bg-surface p-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total collected</p>
           <p className="font-mono text-lg tabular-nums text-ink">Tk {summary.totalCollected.toFixed(2)}</p>
@@ -38,7 +38,7 @@ export default async function Home() {
         </div>
       </section>
 
-      <section className="flex flex-wrap justify-center gap-6 rounded-md border border-line bg-surface p-4">
+      <section className="flex flex-wrap justify-center gap-8 rounded-md border border-line bg-surface p-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Your shares</p>
           <p className="font-mono text-lg tabular-nums text-ink">{personal.currentShareCount}</p>

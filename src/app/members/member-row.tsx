@@ -3,7 +3,17 @@
 import { useState } from "react";
 import type { Role } from "@/generated/prisma/enums";
 import { RoleBadge } from "@/components/role-badge";
-import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/styles";
+import {
+  fieldHintClasses,
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+  rowMutedClasses,
+  rowPrimaryClasses,
+  secondaryButtonClasses,
+} from "@/components/styles";
 
 interface MemberShareEntry {
   id: string;
@@ -35,10 +45,12 @@ export function MemberRow({ member, editMember, shares, addShare }: MemberRowPro
 
   if (!editing) {
     return (
-      <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
+      <li className="flex flex-col gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
         <div className="flex items-center justify-between gap-3">
-          <span className="flex items-center gap-2">
-            {member.name} — {member.email} <RoleBadge role={member.role} />
+          <span className="flex flex-wrap items-center gap-x-2">
+            <span className={rowPrimaryClasses}>{member.name}</span>
+            <span className={rowMutedClasses}>— {member.email}</span>
+            <RoleBadge role={member.role} />
             <span className="font-mono text-xs tabular-nums text-ink-soft">
               {currentShareCount} {currentShareCount === 1 ? "share" : "shares"}
             </span>
@@ -63,22 +75,24 @@ export function MemberRow({ member, editMember, shares, addShare }: MemberRowPro
               <ul className="flex flex-col gap-1 font-mono text-xs tabular-nums text-ink-soft">
                 {shares.map((share) => (
                   <li key={share.id}>
-                    {share.shareCount} shares from {formatDate(share.effectiveFrom)}
+                    <span className="font-semibold text-ink">{share.shareCount}</span> shares from{" "}
+                    {formatDate(share.effectiveFrom)}
                   </li>
                 ))}
               </ul>
             )}
-            <form action={addShare} className="flex flex-wrap items-end gap-3">
+            <form action={addShare} className={formClasses}>
               <input type="hidden" name="memberId" value={member.id} />
-              <label className="flex flex-col gap-1 text-sm text-ink">
+              <label className={fieldLabelClasses}>
                 Share count
                 <input name="shareCount" type="number" min={1} step={1} required className={inputClasses} />
               </label>
-              <label className="flex flex-col gap-1 text-sm text-ink">
+              <label className={fieldLabelClasses}>
                 Effective from
                 <input name="effectiveFrom" type="date" required className={inputClasses} />
+                <span className={fieldHintClasses}>The date this update takes effect from</span>
               </label>
-              <button type="submit" className={primaryButtonClasses}>
+              <button type="submit" className={`${primaryButtonClasses} ${formActionsClasses} w-full`}>
                 Record change
               </button>
             </form>
@@ -89,36 +103,38 @@ export function MemberRow({ member, editMember, shares, addShare }: MemberRowPro
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-3">
+    <li className="rounded-md border border-line bg-surface p-4">
       <form
         action={async (formData) => {
           await editMember(formData);
           setEditing(false);
         }}
-        className="flex flex-wrap items-end gap-3"
+        className={formClasses}
       >
         <input type="hidden" name="id" value={member.id} />
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Name
           <input name="name" type="text" defaultValue={member.name} required className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Email
           <input name="email" type="email" defaultValue={member.email} required className={inputClasses} />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Role
           <select name="role" defaultValue={member.role} className={inputClasses}>
             <option value="MEMBER">MEMBER</option>
             <option value="ADMIN">ADMIN</option>
           </select>
         </label>
-        <button type="submit" className={primaryButtonClasses}>
-          Save
-        </button>
-        <button type="button" onClick={() => setEditing(false)} className={secondaryButtonClasses}>
-          Cancel
-        </button>
+        <div className={`flex gap-3 ${formActionsClasses}`}>
+          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
+            Save
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
+            Cancel
+          </button>
+        </div>
       </form>
     </li>
   );

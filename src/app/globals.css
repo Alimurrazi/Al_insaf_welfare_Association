@@ -56,8 +56,14 @@
 }
 
 /* Fraunces/Public Sans read larger than Tailwind's default scale assumes at
-   the display sizes; sm/base already match Tailwind's defaults exactly. */
+   the display sizes; sm/base already match Tailwind's defaults exactly.
+   xs/sm/base are bumped up from Tailwind's defaults (12/14/16px ->
+   13/16/18px) for readability — most users of this app aren't technical,
+   and text-sm is the de facto body/label/button size used everywhere. */
 @theme {
+  --text-xs: 0.8125rem;
+  --text-sm: 1rem;
+  --text-base: 1.125rem;
   --text-lg: 1.25rem;
   --text-xl: 1.75rem;
   --text-2xl: 2.5rem;

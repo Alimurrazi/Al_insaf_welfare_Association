@@ -1,4 +1,5 @@
 import { signIn } from "@/auth";
+import { primaryButtonClasses } from "@/components/styles";
 
 export default async function SignInPage({
   searchParams,
@@ -13,7 +14,7 @@ export default async function SignInPage({
         Al-Insaf Welfare Association
       </h1>
       {error === "AccessDenied" && (
-        <p className="max-w-sm rounded-md border border-danger/30 bg-danger-soft px-4 py-2 text-center text-sm text-danger">
+        <p className="max-w-sm rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-center text-sm text-danger">
           This Google account is not on the member allow-list. Ask an admin
           to add your email before signing in.
         </p>
@@ -24,10 +25,7 @@ export default async function SignInPage({
           await signIn("google");
         }}
       >
-        <button
-          type="submit"
-          className="rounded-md bg-accent px-4 py-2 text-sm font-semibold text-white transition-colors hover:bg-accent-strong"
-        >
+        <button type="submit" className={primaryButtonClasses}>
           Sign in with Google
         </button>
       </form>

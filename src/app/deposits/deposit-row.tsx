@@ -1,7 +1,20 @@
 "use client";
 
 import { useState } from "react";
-import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/styles";
+import {
+  fieldHintClasses,
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+  rowAmountClasses,
+  rowMutedClasses,
+  rowNoteClasses,
+  rowPrimaryClasses,
+  secondaryButtonClasses,
+} from "@/components/styles";
+import { MONTH_NAMES } from "@/lib/month-names";
 
 interface DepositRowProps {
   deposit: {
@@ -29,11 +42,15 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
-        <span className="flex items-center gap-2 font-mono tabular-nums">
-          {memberName} — {deposit.month}/{deposit.year} — Tk {deposit.amount.toFixed(2)} — paid{" "}
-          {formatDate(deposit.paidDate)}
-          {deposit.note ? ` — ${deposit.note}` : ""}
+      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
+        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
+          <span className={rowPrimaryClasses}>{memberName}</span>
+          <span className={rowMutedClasses}>
+            — {deposit.month}/{deposit.year} —
+          </span>
+          <span className={rowAmountClasses}>Tk {deposit.amount.toFixed(2)}</span>
+          <span className={rowMutedClasses}>— paid {formatDate(deposit.paidDate)}</span>
+          {deposit.note && <span className={rowNoteClasses}>— {deposit.note}</span>}
         </span>
         <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
           Edit
@@ -43,16 +60,16 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-3">
+    <li className="rounded-md border border-line bg-surface p-4">
       <form
         action={async (formData) => {
           await editDeposit(formData);
           setEditing(false);
         }}
-        className="flex flex-wrap items-end gap-3"
+        className={formClasses}
       >
         <input type="hidden" name="id" value={deposit.id} />
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Member
           <select name="memberId" defaultValue={deposit.memberId} className={inputClasses}>
             {members.map((member) => (
@@ -62,20 +79,18 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Month
-          <input
-            name="month"
-            type="number"
-            min={1}
-            max={12}
-            step={1}
-            defaultValue={deposit.month}
-            required
-            className={inputClasses}
-          />
+          <select name="month" defaultValue={deposit.month} required className={inputClasses}>
+            {MONTH_NAMES.map((name, i) => (
+              <option key={name} value={i + 1}>
+                {name}
+              </option>
+            ))}
+          </select>
+          <span className={fieldHintClasses}>Which month this deposit counts toward</span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Year
           <input
             name="year"
@@ -86,8 +101,9 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
             required
             className={inputClasses}
           />
+          <span className={fieldHintClasses}>Which year this deposit counts toward</span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Amount
           <input
             name="amount"
@@ -99,7 +115,7 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Paid date
           <input
             name="paidDate"
@@ -108,17 +124,22 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
             required
             className={inputClasses}
           />
+          <span className={fieldHintClasses}>
+            The actual date payment was received — may differ from the period selected above
+          </span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Note
           <input name="note" type="text" defaultValue={deposit.note ?? ""} className={inputClasses} />
         </label>
-        <button type="submit" className={primaryButtonClasses}>
-          Save
-        </button>
-        <button type="button" onClick={() => setEditing(false)} className={secondaryButtonClasses}>
-          Cancel
-        </button>
+        <div className={`flex gap-3 ${formActionsClasses}`}>
+          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
+            Save
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
+            Cancel
+          </button>
+        </div>
       </form>
     </li>
   );

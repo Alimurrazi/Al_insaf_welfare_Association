@@ -78,7 +78,10 @@ test.describe("/deposits access boundary and flow", () => {
     await expect(page.getByText(/this page could not be found/i)).toBeVisible();
   });
 
-  test("an admin can add a deposit and then edit it", async ({ page, context }) => {
+  test("an admin can add a deposit — paid date auto-fills month/year, and then edit it", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
@@ -86,17 +89,19 @@ test.describe("/deposits access boundary and flow", () => {
 
     const addForm = page.locator("form", { hasText: "Add deposit" });
     await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
-    await addForm.getByLabel("Month").fill("6");
-    await addForm.getByLabel("Year").fill("2026");
-    await addForm.getByLabel("Amount").fill("150");
+    // Deliberately NOT touching Month/Year — entering the paid date alone
+    // should populate them (June/2026) as an editable default.
     await addForm.getByLabel("Paid date").fill("2026-06-05");
+    await addForm.getByLabel("Amount").fill("150");
     await addForm.getByLabel("Note").fill("June deposit");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
 
     // Scoped by TARGET_NAME only (not also "6/2026") — once the row flips
-    // into its edit form, the month/year become <input> values rather than
-    // text content, so a text-based filter would stop matching mid-test.
+    // into its edit form, the month/year become <select>/<input> values
+    // rather than text content, so a text-based filter would stop matching
+    // mid-test.
     const row = page.locator("li", { hasText: TARGET_NAME });
+    await expect(row).toContainText("6/2026");
     await expect(row).toContainText("150.00");
     await expect(row).toContainText("June deposit");
 
@@ -107,5 +112,35 @@ test.describe("/deposits access boundary and flow", () => {
 
     await expect(row).toContainText("175.00");
     await expect(row).toContainText("June deposit (corrected)");
+  });
+
+  test("an admin can record two months' deposits from one paid date by only changing Month", async ({
+    page,
+    context,
+  }) => {
+    const cookie = await createSessionCookie(ADMIN_EMAIL);
+    await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
+
+    await page.goto("/deposits");
+
+    const addForm = page.locator("form", { hasText: "Add deposit" });
+    await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
+    await addForm.getByLabel("Paid date").fill("2026-08-16");
+    await addForm.getByLabel("Amount").fill("3000");
+    await expect(addForm.getByLabel("Month")).toHaveValue("8");
+    await addForm.getByRole("button", { name: "Add deposit" }).click();
+
+    const augustRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "8/2026" });
+    await expect(augustRow).toContainText("3000.00");
+
+    // Same paid date, but the admin only changes Month for the second entry.
+    await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
+    await addForm.getByLabel("Month").selectOption({ label: "September" });
+    await addForm.getByLabel("Amount").fill("3000");
+    await addForm.getByRole("button", { name: "Add deposit" }).click();
+
+    const septemberRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "9/2026" });
+    await expect(septemberRow).toContainText("3000.00");
+    await expect(septemberRow).toContainText("paid 2026-08-16");
   });
 });

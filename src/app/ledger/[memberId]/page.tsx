@@ -2,6 +2,7 @@ import { notFound } from "next/navigation";
 import Link from "next/link";
 import { getMemberLedger } from "@/lib/member-ledger";
 import { MemberNotFoundError } from "@/lib/members";
+import { rowAmountClasses, rowMutedClasses, rowNoteClasses, rowPrimaryClasses } from "@/components/styles";
 
 function formatDate(date: Date) {
   return new Date(date).toISOString().slice(0, 10);
@@ -25,16 +26,16 @@ export default async function MemberLedgerPage({
   }
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">
+    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
       <div className="flex flex-col gap-1">
         <Link href="/ledger" className="text-sm text-accent underline underline-offset-4 hover:text-accent-strong">
-          ← Back to ledger grid
+          ← Back to Logbook
         </Link>
         <h1 className="font-display text-xl font-bold text-ink">{ledger.member.name}</h1>
         <p className="text-sm text-ink-soft">{ledger.member.email}</p>
       </div>
 
-      <section className="flex flex-wrap gap-6 rounded-md border border-line bg-surface p-4">
+      <section className="flex flex-wrap gap-8 rounded-md border border-line bg-surface p-6">
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Current shares</p>
           <p className="font-mono text-lg tabular-nums text-ink">{ledger.currentShareCount}</p>
@@ -54,9 +55,10 @@ export default async function MemberLedgerPage({
           {ledger.shareHistory.map((share) => (
             <li
               key={share.id}
-              className="rounded-md border border-line bg-surface p-3 font-mono text-sm tabular-nums text-ink"
+              className="flex flex-wrap items-center gap-x-2 rounded-md border border-line bg-surface p-4 font-mono text-sm tabular-nums"
             >
-              {share.shareCount} shares effective from {formatDate(share.effectiveFrom)}
+              <span className={rowPrimaryClasses}>{share.shareCount} shares</span>
+              <span className={rowMutedClasses}>effective from {formatDate(share.effectiveFrom)}</span>
             </li>
           ))}
         </ul>
@@ -71,11 +73,14 @@ export default async function MemberLedgerPage({
           {ledger.deposits.map((deposit) => (
             <li
               key={deposit.id}
-              className="rounded-md border border-line bg-surface p-3 font-mono text-sm tabular-nums text-ink"
+              className="flex flex-wrap items-center gap-x-2 rounded-md border border-line bg-surface p-4 font-mono text-sm tabular-nums"
             >
-              {deposit.month}/{deposit.year} — Tk {Number(deposit.amount).toFixed(2)} — paid{" "}
-              {formatDate(deposit.paidDate)}
-              {deposit.note ? ` — ${deposit.note}` : ""}
+              <span className={rowMutedClasses}>
+                {deposit.month}/{deposit.year} —
+              </span>
+              <span className={rowAmountClasses}>Tk {Number(deposit.amount).toFixed(2)}</span>
+              <span className={rowMutedClasses}>— paid {formatDate(deposit.paidDate)}</span>
+              {deposit.note && <span className={rowNoteClasses}>— {deposit.note}</span>}
             </li>
           ))}
         </ul>
@@ -90,11 +95,14 @@ export default async function MemberLedgerPage({
           {ledger.topups.map((topup) => (
             <li
               key={topup.id}
-              className="rounded-md border border-line bg-surface p-3 font-mono text-sm tabular-nums text-ink"
+              className="flex flex-wrap items-center gap-x-2 rounded-md border border-line bg-surface p-4 font-mono text-sm tabular-nums"
             >
-              {topup.year} OTP #{topup.otpNumber} — Tk {Number(topup.amount).toFixed(2)} — paid{" "}
-              {formatDate(topup.paidDate)}
-              {topup.note ? ` — ${topup.note}` : ""}
+              <span className={rowMutedClasses}>
+                {topup.year} OTP #{topup.otpNumber} —
+              </span>
+              <span className={rowAmountClasses}>Tk {Number(topup.amount).toFixed(2)}</span>
+              <span className={rowMutedClasses}>— paid {formatDate(topup.paidDate)}</span>
+              {topup.note && <span className={rowNoteClasses}>— {topup.note}</span>}
             </li>
           ))}
         </ul>

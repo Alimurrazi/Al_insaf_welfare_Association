@@ -51,7 +51,7 @@ test.describe("/ (dashboard/home) — shared", () => {
     await client.end();
   });
 
-  test("shows group summary, personal snapshot, and a working 'My ledger' link", async ({
+  test("shows group summary, personal snapshot, and a working 'My Passbook' link", async ({
     page,
     context,
   }) => {
@@ -70,7 +70,7 @@ test.describe("/ (dashboard/home) — shared", () => {
     const paidStat = page.locator("div", { hasText: "Your total paid" }).last();
     await expect(paidStat).toContainText("Tk 3000.00");
 
-    await page.getByRole("link", { name: "My ledger" }).click();
+    await page.getByRole("link", { name: "My Passbook" }).click();
     await expect(page).toHaveURL(`/ledger/${memberId}`);
   });
 });

@@ -95,7 +95,7 @@ test.describe("/ledger/[memberId] — shared, read-only for both roles", () => {
     expect(response?.status()).toBe(404);
   });
 
-  test("clicking a member's name on the ledger grid links to their individual ledger", async ({
+  test("clicking a member's name on the Logbook links to their individual ledger", async ({
     page,
     context,
   }) => {

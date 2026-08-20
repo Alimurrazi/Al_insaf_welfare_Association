@@ -1,7 +1,19 @@
 "use client";
 
 import { useState } from "react";
-import { inputClasses, primaryButtonClasses, secondaryButtonClasses } from "@/components/styles";
+import {
+  fieldHintClasses,
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+  rowAmountClasses,
+  rowMutedClasses,
+  rowNoteClasses,
+  rowPrimaryClasses,
+  secondaryButtonClasses,
+} from "@/components/styles";
 
 interface TopupRowProps {
   topup: {
@@ -29,11 +41,15 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-3 text-sm text-ink">
-        <span className="flex items-center gap-2 font-mono tabular-nums">
-          {memberName} — {topup.year} OTP #{topup.otpNumber} — Tk {topup.amount.toFixed(2)} — paid{" "}
-          {formatDate(topup.paidDate)}
-          {topup.note ? ` — ${topup.note}` : ""}
+      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
+        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
+          <span className={rowPrimaryClasses}>{memberName}</span>
+          <span className={rowMutedClasses}>
+            — {topup.year} OTP #{topup.otpNumber} —
+          </span>
+          <span className={rowAmountClasses}>Tk {topup.amount.toFixed(2)}</span>
+          <span className={rowMutedClasses}>— paid {formatDate(topup.paidDate)}</span>
+          {topup.note && <span className={rowNoteClasses}>— {topup.note}</span>}
         </span>
         <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
           Edit
@@ -43,16 +59,16 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-3">
+    <li className="rounded-md border border-line bg-surface p-4">
       <form
         action={async (formData) => {
           await editTopup(formData);
           setEditing(false);
         }}
-        className="flex flex-wrap items-end gap-3"
+        className={formClasses}
       >
         <input type="hidden" name="id" value={topup.id} />
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Member
           <select name="memberId" defaultValue={topup.memberId} className={inputClasses}>
             {members.map((member) => (
@@ -62,7 +78,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
             ))}
           </select>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Year
           <input
             name="year"
@@ -73,8 +89,9 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
             required
             className={inputClasses}
           />
+          <span className={fieldHintClasses}>Which year this top-up counts toward</span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           OTP number
           <input
             name="otpNumber"
@@ -85,8 +102,9 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
             required
             className={inputClasses}
           />
+          <span className={fieldHintClasses}>Installment 1 or 2 of the annual top-up</span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Amount
           <input
             name="amount"
@@ -98,7 +116,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
             className={inputClasses}
           />
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Paid date
           <input
             name="paidDate"
@@ -107,17 +125,20 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
             required
             className={inputClasses}
           />
+          <span className={fieldHintClasses}>When the payment was actually received</span>
         </label>
-        <label className="flex flex-col gap-1 text-sm text-ink">
+        <label className={fieldLabelClasses}>
           Note
           <input name="note" type="text" defaultValue={topup.note ?? ""} className={inputClasses} />
         </label>
-        <button type="submit" className={primaryButtonClasses}>
-          Save
-        </button>
-        <button type="button" onClick={() => setEditing(false)} className={secondaryButtonClasses}>
-          Cancel
-        </button>
+        <div className={`flex gap-3 ${formActionsClasses}`}>
+          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
+            Save
+          </button>
+          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
+            Cancel
+          </button>
+        </div>
       </form>
     </li>
   );

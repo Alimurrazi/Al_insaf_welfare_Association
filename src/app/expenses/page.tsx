@@ -2,7 +2,13 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { createExpense, filterExpenses, listExpenses, sumExpenseAmounts, updateExpense } from "@/lib/expenses";
-import { inputClasses, primaryButtonClasses } from "@/components/styles";
+import {
+  fieldLabelClasses,
+  formActionsClasses,
+  formClasses,
+  inputClasses,
+  primaryButtonClasses,
+} from "@/components/styles";
 import { ExpenseRow } from "./expense-row";
 
 async function requireAdminSession() {
@@ -63,7 +69,7 @@ export default async function ExpensesPage({
   const total = sumExpenseAmounts(filtered);
 
   return (
-    <main className="mx-auto flex max-w-3xl flex-col gap-8 px-4 py-12">
+    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
       <h1 className="font-display text-xl font-bold text-ink">Expenses</h1>
 
       {isAdmin && (
@@ -71,24 +77,24 @@ export default async function ExpensesPage({
           <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">
             Add an expense
           </h2>
-          <form action={addExpense} className="flex flex-wrap items-end gap-3">
-            <label className="flex flex-col gap-1 text-sm text-ink">
+          <form action={addExpense} className={formClasses}>
+            <label className={fieldLabelClasses}>
               Date
               <input name="date" type="date" required className={inputClasses} />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className={fieldLabelClasses}>
               Category
               <input name="category" type="text" required className={inputClasses} />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className={fieldLabelClasses}>
               Amount
               <input name="amount" type="number" min={0.01} step={0.01} required className={inputClasses} />
             </label>
-            <label className="flex flex-col gap-1 text-sm text-ink">
+            <label className={fieldLabelClasses}>
               Note
               <input name="note" type="text" className={inputClasses} />
             </label>
-            <button type="submit" className={primaryButtonClasses}>
+            <button type="submit" className={`${primaryButtonClasses} ${formActionsClasses} w-full`}>
               Add expense
             </button>
           </form>
