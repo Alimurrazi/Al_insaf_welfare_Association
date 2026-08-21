@@ -14,6 +14,7 @@ import {
   rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
 
 interface TopupRowProps {
   topup: {
@@ -30,10 +31,6 @@ interface TopupRowProps {
   editTopup: (formData: FormData) => Promise<void>;
 }
 
-function formatDate(date: Date) {
-  return new Date(date).toISOString().slice(0, 10);
-}
-
 // Editing toggles into a labeled form on demand rather than always rendering
 // one, following the same pattern as DepositRow/MemberRow.
 export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProps) {
@@ -47,7 +44,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
           <span className={rowMutedClasses}>
             — {topup.year} OTP #{topup.otpNumber} —
           </span>
-          <span className={rowAmountClasses}>Tk {topup.amount.toFixed(2)}</span>
+          <span className={rowAmountClasses}>{formatCurrency(topup.amount)}</span>
           <span className={rowMutedClasses}>— paid {formatDate(topup.paidDate)}</span>
           {topup.note && <span className={rowNoteClasses}>— {topup.note}</span>}
         </span>
@@ -121,7 +118,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
           <input
             name="paidDate"
             type="date"
-            defaultValue={formatDate(topup.paidDate)}
+            defaultValue={toDateInputValue(topup.paidDate)}
             required
             className={inputClasses}
           />

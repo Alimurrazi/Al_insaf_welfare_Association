@@ -50,8 +50,11 @@ test.describe("/activity — shared, read-only for both roles", () => {
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /activity feed/i })).toBeVisible();
     const row = page.locator("li", { hasText: `${PREFIX}Admin` }).first();
-    await expect(row).toContainText("CREATE");
-    await expect(row).toContainText("Expense");
+    await expect(row).toContainText(`${PREFIX}Admin added an expense of Tk 500.00 — Land survey`);
+
+    // The raw field-by-field diff lives inside a collapsed <details> — open
+    // it before asserting on its contents.
+    await row.getByText("Details").click();
     await expect(row).toContainText("category: Land survey");
   });
 

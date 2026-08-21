@@ -14,6 +14,7 @@ import {
   rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { formatCurrency, formatDate, formatMonthYear, toDateInputValue } from "@/lib/format";
 import { MONTH_NAMES } from "@/lib/month-names";
 
 interface DepositRowProps {
@@ -31,10 +32,6 @@ interface DepositRowProps {
   editDeposit: (formData: FormData) => Promise<void>;
 }
 
-function formatDate(date: Date) {
-  return new Date(date).toISOString().slice(0, 10);
-}
-
 // Editing toggles into a labeled form on demand rather than always rendering
 // one, following the same pattern as MemberRow.
 export function DepositRow({ deposit, memberName, members, editDeposit }: DepositRowProps) {
@@ -46,9 +43,9 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
         <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
           <span className={rowPrimaryClasses}>{memberName}</span>
           <span className={rowMutedClasses}>
-            — {deposit.month}/{deposit.year} —
+            — {formatMonthYear(deposit.month, deposit.year)} —
           </span>
-          <span className={rowAmountClasses}>Tk {deposit.amount.toFixed(2)}</span>
+          <span className={rowAmountClasses}>{formatCurrency(deposit.amount)}</span>
           <span className={rowMutedClasses}>— paid {formatDate(deposit.paidDate)}</span>
           {deposit.note && <span className={rowNoteClasses}>— {deposit.note}</span>}
         </span>
@@ -120,7 +117,7 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
           <input
             name="paidDate"
             type="date"
-            defaultValue={formatDate(deposit.paidDate)}
+            defaultValue={toDateInputValue(deposit.paidDate)}
             required
             className={inputClasses}
           />

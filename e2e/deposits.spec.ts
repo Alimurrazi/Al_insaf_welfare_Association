@@ -53,7 +53,10 @@ test.describe("/deposits access boundary and flow", () => {
     await client.end();
   });
 
-  test("an ADMIN session sees the manage-deposits heading and form", async ({ page, context }) => {
+  test("an ADMIN session sees the manage-deposits heading and can open the add-deposit form", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
@@ -61,6 +64,10 @@ test.describe("/deposits access boundary and flow", () => {
 
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /deposits/i })).toBeVisible();
+
+    // The add form lives inside a modal, closed by default — open it before
+    // asserting its fields are present.
+    await page.getByRole("button", { name: "+ Add deposit" }).click();
     await expect(page.getByLabel(/member/i).first()).toBeVisible();
     await expect(page.getByLabel(/amount/i).first()).toBeVisible();
   });
@@ -87,7 +94,8 @@ test.describe("/deposits access boundary and flow", () => {
 
     await page.goto("/deposits");
 
-    const addForm = page.locator("form", { hasText: "Add deposit" });
+    await page.getByRole("button", { name: "+ Add deposit" }).click();
+    const addForm = page.locator("dialog form");
     await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
     // Deliberately NOT touching Month/Year — entering the paid date alone
     // should populate them (June/2026) as an editable default.
@@ -95,13 +103,18 @@ test.describe("/deposits access boundary and flow", () => {
     await addForm.getByLabel("Amount").fill("150");
     await addForm.getByLabel("Note").fill("June deposit");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
+    // The modal deliberately stays open after a successful save (so a
+    // second month can be added from the same paid date) — close it before
+    // asserting on the row underneath.
+    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
 
-    // Scoped by TARGET_NAME only (not also "6/2026") — once the row flips
+    // Scoped by TARGET_NAME only (not also "Jun 2026") — once the row flips
     // into its edit form, the month/year become <select>/<input> values
     // rather than text content, so a text-based filter would stop matching
     // mid-test.
     const row = page.locator("li", { hasText: TARGET_NAME });
-    await expect(row).toContainText("6/2026");
+    await expect(row).toContainText("Jun 2026");
     await expect(row).toContainText("150.00");
     await expect(row).toContainText("June deposit");
 
@@ -123,24 +136,31 @@ test.describe("/deposits access boundary and flow", () => {
 
     await page.goto("/deposits");
 
-    const addForm = page.locator("form", { hasText: "Add deposit" });
+    await page.getByRole("button", { name: "+ Add deposit" }).click();
+    const addForm = page.locator("dialog form");
     await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
     await addForm.getByLabel("Paid date").fill("2026-08-16");
     await addForm.getByLabel("Amount").fill("3000");
     await expect(addForm.getByLabel("Month")).toHaveValue("8");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
+    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
 
-    const augustRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "8/2026" });
-    await expect(augustRow).toContainText("3000.00");
-
-    // Same paid date, but the admin only changes Month for the second entry.
-    await addForm.getByLabel("Member").selectOption({ label: TARGET_NAME });
+    // Same paid date, but the admin only changes Month for the second entry
+    // — the modal stays open after the first save specifically so this
+    // works without re-opening it or re-selecting the member/date.
     await addForm.getByLabel("Month").selectOption({ label: "September" });
-    await addForm.getByLabel("Amount").fill("3000");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
+    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
 
-    const septemberRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "9/2026" });
-    await expect(septemberRow).toContainText("3000.00");
-    await expect(septemberRow).toContainText("paid 2026-08-16");
+    // Filtered on "— Aug 2026 —" (with the surrounding dashes from the
+    // month/year span), not just "Aug 2026" — both rows share the same
+    // "paid 16 Aug 2026" text, so a bare "Aug 2026" filter would match both.
+    const augustRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "— Aug 2026 —" });
+    await expect(augustRow).toContainText("3,000.00");
+
+    const septemberRow = page.locator("li", { hasText: TARGET_NAME }).filter({ hasText: "— Sep 2026 —" });
+    await expect(septemberRow).toContainText("3,000.00");
+    await expect(septemberRow).toContainText("paid 16 Aug 2026");
   });
 });

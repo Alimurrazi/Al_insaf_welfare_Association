@@ -24,12 +24,15 @@ export const fieldHintClasses = "block text-xs font-normal text-ink-soft";
 export const formActionsClasses = "sm:col-span-2";
 // Row-summary color pattern, reused everywhere a list row reads like
 // "Name — period — Tk amount — paid date — note" (deposits, top-ups,
-// expenses, members, passbook history): the identifying name/category
-// stands out in ink, the amount stands out in the one accent color, and
-// everything else (dates, periods, notes) recedes to ink-soft — instead of
-// one flat line of same-weight, same-color text that's hard to scan.
+// expenses, members, passbook history): the identifying name/category and
+// the amount both stand out in ink (bold), and everything else (dates,
+// periods, notes) recedes to ink-soft — instead of one flat line of
+// same-weight, same-color text that's hard to scan. Amounts deliberately do
+// NOT use the accent color: accent means "interactive" everywhere else in
+// this app (links, nav, buttons), and coloring static amounts the same way
+// invites users to tap them.
 export const rowPrimaryClasses = "font-semibold text-ink";
-export const rowAmountClasses = "font-semibold text-accent";
+export const rowAmountClasses = "font-semibold text-ink";
 export const rowMutedClasses = "text-ink-soft";
 export const rowNoteClasses = "italic text-ink-soft";
 

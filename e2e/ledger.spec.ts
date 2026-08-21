@@ -60,7 +60,7 @@ test.describe("/ledger — shared, read-only for both roles", () => {
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /logbook/i })).toBeVisible();
     const row = page.locator("tr", { hasText: TARGET_NAME });
-    await expect(row).toContainText("3000.00");
+    await expect(row).toContainText("3,000.00");
   });
 
   test("a MEMBER session can also view the ledger grid (read-only, not gated to admins)", async ({
@@ -75,7 +75,7 @@ test.describe("/ledger — shared, read-only for both roles", () => {
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /logbook/i })).toBeVisible();
     const row = page.locator("tr", { hasText: TARGET_NAME });
-    await expect(row).toContainText("3000.00");
+    await expect(row).toContainText("3,000.00");
   });
 
   test("an unauthenticated visitor is redirected to sign-in", async ({ page }) => {

@@ -54,14 +54,10 @@ export default async function DepositsPage() {
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
-      <h1 className="font-display text-xl font-bold text-ink">Manage Deposits</h1>
-
-      <section className="flex flex-col gap-3">
-        <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">
-          Add a deposit
-        </h2>
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-xl font-bold text-ink">Manage Deposits</h1>
         <AddDepositForm members={members} addDeposit={addDeposit} />
-      </section>
+      </div>
 
       <section className="flex flex-col gap-3">
         <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">

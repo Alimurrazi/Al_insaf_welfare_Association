@@ -60,7 +60,7 @@ test.describe("member shares (manage members screen)", () => {
     await expect(row.getByText(/^4 shares$/)).toBeVisible();
 
     await row.getByRole("button", { name: "Shares" }).click();
-    await expect(row.getByText(/4 shares from 2025-01-01/)).toBeVisible();
+    await expect(row.getByText(/4 shares from 1 Jan 2025/)).toBeVisible();
 
     await row.getByLabel("Share count").fill("7");
     await row.getByLabel("Effective from").fill("2026-06-01");
@@ -68,6 +68,6 @@ test.describe("member shares (manage members screen)", () => {
 
     const updatedRow = page.locator("li", { hasText: TARGET_EMAIL }).first();
     await expect(updatedRow.getByText(/^7 shares$/)).toBeVisible();
-    await expect(updatedRow.getByText(/7 shares from 2026-06-01/)).toBeVisible();
+    await expect(updatedRow.getByText(/7 shares from 1 Jun 2026/)).toBeVisible();
   });
 });

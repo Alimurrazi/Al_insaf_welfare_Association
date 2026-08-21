@@ -13,6 +13,7 @@ import {
   rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
 
 interface ExpenseRowProps {
   expense: {
@@ -28,10 +29,6 @@ interface ExpenseRowProps {
   editExpense?: (formData: FormData) => Promise<void>;
 }
 
-function formatDate(date: Date) {
-  return new Date(date).toISOString().slice(0, 10);
-}
-
 // Editing toggles into a labeled form on demand rather than always rendering
 // one, following the same pattern as DepositRow/TopupRow/MemberRow.
 export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
@@ -44,7 +41,7 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
           <span className={rowMutedClasses}>{formatDate(expense.date)} —</span>
           <span className={rowPrimaryClasses}>{expense.category}</span>
           <span className={rowMutedClasses}>—</span>
-          <span className={rowAmountClasses}>Tk {expense.amount.toFixed(2)}</span>
+          <span className={rowAmountClasses}>{formatCurrency(expense.amount)}</span>
           {expense.note && <span className={rowNoteClasses}>— {expense.note}</span>}
         </span>
         {editExpense && (
@@ -71,7 +68,7 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
           <input
             name="date"
             type="date"
-            defaultValue={formatDate(expense.date)}
+            defaultValue={toDateInputValue(expense.date)}
             required
             className={inputClasses}
           />

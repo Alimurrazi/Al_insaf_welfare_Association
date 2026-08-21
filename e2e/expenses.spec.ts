@@ -41,7 +41,10 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await client.end();
   });
 
-  test("an ADMIN session sees the add-expense form", async ({ page, context }) => {
+  test("an ADMIN session sees the manage-expenses heading and can open the add-expense form", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
@@ -49,7 +52,9 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
 
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Expenses" })).toBeVisible();
-    const addForm = page.locator("form", { hasText: "Add expense" });
+
+    await page.getByRole("button", { name: "+ Add expense" }).click();
+    const addForm = page.locator("dialog form");
     await expect(addForm.getByLabel("Category")).toBeVisible();
     await expect(addForm.getByLabel("Amount")).toBeVisible();
   });
@@ -65,7 +70,7 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
 
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: "Expenses" })).toBeVisible();
-    await expect(page.locator("form", { hasText: "Add expense" })).toHaveCount(0);
+    await expect(page.getByRole("button", { name: "+ Add expense" })).toHaveCount(0);
     await expect(page.getByRole("button", { name: "Edit" })).toHaveCount(0);
     // The filter form is still visible to Members — browsing is shared.
     await expect(page.locator("form", { hasText: "Apply" })).toBeVisible();
@@ -80,12 +85,15 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
 
     await page.goto("/expenses");
 
-    const addForm = page.locator("form", { hasText: "Add expense" });
+    await page.getByRole("button", { name: "+ Add expense" }).click();
+    const addForm = page.locator("dialog form");
     await addForm.getByLabel("Date").fill("2026-06-05");
     await addForm.getByLabel("Category").fill("Land survey");
     await addForm.getByLabel("Amount").fill("500");
     await addForm.getByLabel("Note").fill("Surveyor fee");
     await addForm.getByRole("button", { name: "Add expense" }).click();
+    await expect(addForm.getByText(/expense saved/i)).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
 
     await expect(page.getByText("Total: Tk 500.00")).toBeVisible();
 
@@ -116,11 +124,14 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
     await page.goto("/expenses");
-    const addForm = page.locator("form", { hasText: "Add expense" });
+    await page.getByRole("button", { name: "+ Add expense" }).click();
+    const addForm = page.locator("dialog form");
     await addForm.getByLabel("Date").fill("2026-07-01");
     await addForm.getByLabel("Category").fill("Legal fees");
     await addForm.getByLabel("Amount").fill("300");
     await addForm.getByRole("button", { name: "Add expense" }).click();
+    await expect(addForm.getByText(/expense saved/i)).toBeVisible();
+    await page.getByRole("button", { name: "Close" }).click();
 
     // Two expenses now exist ("Land survey" 550 from the prior test, "Legal
     // fees" 300 just added) — filter down to just Legal fees.

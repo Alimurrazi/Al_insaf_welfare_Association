@@ -7,6 +7,7 @@ import {
   rowAmountClasses,
   rowMutedClasses,
 } from "@/components/styles";
+import { formatCurrency, formatDate } from "@/lib/format";
 
 const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -19,10 +20,8 @@ function Cell({ entries }: { entries: LedgerEntry[] }) {
     <div className="flex flex-col gap-1">
       {entries.map((entry) => (
         <div key={entry.id}>
-          <span className={rowAmountClasses}>Tk {entry.amount.toFixed(2)}</span>{" "}
-          <span className={rowMutedClasses}>
-            ({new Date(entry.paidDate).toISOString().slice(0, 10)})
-          </span>
+          <span className={rowAmountClasses}>{formatCurrency(entry.amount)}</span>{" "}
+          <span className={rowMutedClasses}>({formatDate(entry.paidDate)})</span>
         </div>
       ))}
     </div>
@@ -67,7 +66,7 @@ export default async function LedgerPage({
 
       <div className="overflow-x-auto rounded-md border border-line">
         {/* table-fixed + colgroup: the Member column gets a fixed width, and
-            the 14 remaining columns (months + OTP-1/2) share whatever width
+            the 14 remaining columns (months + Top-up 1/2) share whatever width
             is left equally — so on a wide screen every column actually
             stretches to use the space, instead of every column staying
             content-sized (all "—") and leaving the rest of the page blank. */}
@@ -94,10 +93,10 @@ export default async function LedgerPage({
                 </th>
               ))}
               <th className="border-b border-line p-3 text-left font-mono text-xs uppercase tracking-wide text-ink-soft">
-                OTP-1
+                Top-up 1
               </th>
               <th className="border-b border-line p-3 text-left font-mono text-xs uppercase tracking-wide text-ink-soft">
-                OTP-2
+                Top-up 2
               </th>
             </tr>
           </thead>

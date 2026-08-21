@@ -11,6 +11,11 @@ loadEnv({ path: ".env", quiet: true });
 
 const PREFIX = "e2e-dashboard-test-";
 const MEMBER_EMAIL = `${PREFIX}member@example.com`;
+const ADMIN_EMAIL = `${PREFIX}admin@example.com`;
+const PAID_NAME = `${PREFIX}Paid`;
+const PAID_EMAIL = `${PREFIX}paid@example.com`;
+const UNPAID_NAME = `${PREFIX}Unpaid`;
+const UNPAID_EMAIL = `${PREFIX}unpaid@example.com`;
 
 test.describe("/ (dashboard/home) — shared", () => {
   test.describe.configure({ mode: "serial" });
@@ -68,9 +73,51 @@ test.describe("/ (dashboard/home) — shared", () => {
     const sharesStat = page.locator("div", { hasText: "Your shares" }).last();
     await expect(sharesStat).toContainText("2");
     const paidStat = page.locator("div", { hasText: "Your total paid" }).last();
-    await expect(paidStat).toContainText("Tk 3000.00");
+    await expect(paidStat).toContainText("Tk 3,000.00");
 
     await page.getByRole("link", { name: "My Passbook" }).click();
     await expect(page).toHaveURL(`/ledger/${memberId}`);
+  });
+
+  // Regression test: an earlier version fired getDashboardSummary,
+  // getMemberLedger, and getUnpaidMembers together in one Promise.all —
+  // each already fans out into several of its own concurrent queries, and
+  // for an ADMIN session (the only role that triggers getUnpaidMembers)
+  // that briefly opened enough connections to exhaust the local dev
+  // Postgres engine's small pool, 500-ing the page. This test is the only
+  // one in the suite that loads "/" as an ADMIN, so it's the one that
+  // actually exercises that code path.
+  test("an ADMIN session sees who hasn't paid for the current month", async ({ page, context }) => {
+    const now = new Date();
+    const month = now.getUTCMonth() + 1;
+    const year = now.getUTCFullYear();
+
+    await client.query(
+      `INSERT INTO members (id, name, email, role, "joinDate", "createdAt", "updatedAt")
+       VALUES ($1, $2, $3, 'ADMIN', now(), now(), now()),
+              ($4, $5, $6, 'MEMBER', now(), now(), now()),
+              ($7, $8, $9, 'MEMBER', now(), now(), now())`,
+      [
+        crypto.randomUUID(), `${PREFIX}Admin`, ADMIN_EMAIL,
+        crypto.randomUUID(), PAID_NAME, PAID_EMAIL,
+        crypto.randomUUID(), UNPAID_NAME, UNPAID_EMAIL,
+      ],
+    );
+    const { rows } = await client.query(`SELECT id FROM members WHERE email = $1`, [PAID_EMAIL]);
+    await client.query(
+      `INSERT INTO monthly_deposits (id, "memberId", month, year, amount, "paidDate", "createdById", "createdAt")
+       VALUES ($1, $2, $3, $4, 3000, now(), $2, now())`,
+      [crypto.randomUUID(), rows[0].id, month, year],
+    );
+
+    const cookie = await createSessionCookie(ADMIN_EMAIL);
+    await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
+
+    const response = await page.goto("/");
+
+    expect(response?.status()).toBe(200);
+    const unpaidSection = page.getByText(/haven't paid/i);
+    await expect(unpaidSection).toContainText(UNPAID_NAME);
+    await expect(unpaidSection).not.toContainText(PAID_NAME);
   });
 });

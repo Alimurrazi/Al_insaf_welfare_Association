@@ -3,10 +3,7 @@ import Link from "next/link";
 import { getMemberLedger } from "@/lib/member-ledger";
 import { MemberNotFoundError } from "@/lib/members";
 import { rowAmountClasses, rowMutedClasses, rowNoteClasses, rowPrimaryClasses } from "@/components/styles";
-
-function formatDate(date: Date) {
-  return new Date(date).toISOString().slice(0, 10);
-}
+import { formatCurrency, formatDate, formatMonthYear } from "@/lib/format";
 
 export default async function MemberLedgerPage({
   params,
@@ -42,7 +39,7 @@ export default async function MemberLedgerPage({
         </div>
         <div>
           <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">Total paid</p>
-          <p className="font-mono text-lg tabular-nums text-ink">Tk {ledger.totalPaid.toFixed(2)}</p>
+          <p className="font-mono text-lg tabular-nums text-ink">{formatCurrency(ledger.totalPaid)}</p>
         </div>
       </section>
 
@@ -76,9 +73,9 @@ export default async function MemberLedgerPage({
               className="flex flex-wrap items-center gap-x-2 rounded-md border border-line bg-surface p-4 font-mono text-sm tabular-nums"
             >
               <span className={rowMutedClasses}>
-                {deposit.month}/{deposit.year} —
+                {formatMonthYear(deposit.month, deposit.year)} —
               </span>
-              <span className={rowAmountClasses}>Tk {Number(deposit.amount).toFixed(2)}</span>
+              <span className={rowAmountClasses}>{formatCurrency(Number(deposit.amount))}</span>
               <span className={rowMutedClasses}>— paid {formatDate(deposit.paidDate)}</span>
               {deposit.note && <span className={rowNoteClasses}>— {deposit.note}</span>}
             </li>
@@ -100,7 +97,7 @@ export default async function MemberLedgerPage({
               <span className={rowMutedClasses}>
                 {topup.year} OTP #{topup.otpNumber} —
               </span>
-              <span className={rowAmountClasses}>Tk {Number(topup.amount).toFixed(2)}</span>
+              <span className={rowAmountClasses}>{formatCurrency(Number(topup.amount))}</span>
               <span className={rowMutedClasses}>— paid {formatDate(topup.paidDate)}</span>
               {topup.note && <span className={rowNoteClasses}>— {topup.note}</span>}
             </li>

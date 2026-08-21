@@ -2,13 +2,9 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { auth } from "@/auth";
 import { createExpense, filterExpenses, listExpenses, sumExpenseAmounts, updateExpense } from "@/lib/expenses";
-import {
-  fieldLabelClasses,
-  formActionsClasses,
-  formClasses,
-  inputClasses,
-  primaryButtonClasses,
-} from "@/components/styles";
+import { inputClasses, primaryButtonClasses } from "@/components/styles";
+import { formatCurrency } from "@/lib/format";
+import { AddExpenseForm } from "./add-expense-form";
 import { ExpenseRow } from "./expense-row";
 
 async function requireAdminSession() {
@@ -70,36 +66,10 @@ export default async function ExpensesPage({
 
   return (
     <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
-      <h1 className="font-display text-xl font-bold text-ink">Expenses</h1>
-
-      {isAdmin && (
-        <section className="flex flex-col gap-3">
-          <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">
-            Add an expense
-          </h2>
-          <form action={addExpense} className={formClasses}>
-            <label className={fieldLabelClasses}>
-              Date
-              <input name="date" type="date" required className={inputClasses} />
-            </label>
-            <label className={fieldLabelClasses}>
-              Category
-              <input name="category" type="text" required className={inputClasses} />
-            </label>
-            <label className={fieldLabelClasses}>
-              Amount
-              <input name="amount" type="number" min={0.01} step={0.01} required className={inputClasses} />
-            </label>
-            <label className={fieldLabelClasses}>
-              Note
-              <input name="note" type="text" className={inputClasses} />
-            </label>
-            <button type="submit" className={`${primaryButtonClasses} ${formActionsClasses} w-full`}>
-              Add expense
-            </button>
-          </form>
-        </section>
-      )}
+      <div className="flex items-center justify-between gap-3">
+        <h1 className="font-display text-xl font-bold text-ink">Expenses</h1>
+        {isAdmin && <AddExpenseForm addExpense={addExpense} />}
+      </div>
 
       <section className="flex flex-col gap-3">
         <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">Filter</h2>
@@ -138,7 +108,7 @@ export default async function ExpensesPage({
             {filtered.length} {filtered.length === 1 ? "expense" : "expenses"}
           </p>
           <p className="font-mono text-sm tabular-nums text-ink">
-            Total: Tk {total.toFixed(2)}
+            Total: {formatCurrency(total)}
           </p>
         </div>
         <ul className="flex flex-col gap-2">

@@ -14,6 +14,7 @@ import {
   rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { formatDate } from "@/lib/format";
 
 interface MemberShareEntry {
   id: string;
@@ -26,10 +27,6 @@ interface MemberRowProps {
   editMember: (formData: FormData) => Promise<void>;
   shares: MemberShareEntry[];
   addShare: (formData: FormData) => Promise<void>;
-}
-
-function formatDate(date: Date) {
-  return new Date(date).toISOString().slice(0, 10);
 }
 
 // Editing toggles into a labeled form on demand rather than always rendering

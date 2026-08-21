@@ -47,7 +47,10 @@ test.describe("/members access boundary", () => {
     await client.end();
   });
 
-  test("an ADMIN session sees the manage-members heading and form", async ({ page, context }) => {
+  test("an ADMIN session sees the manage-members heading and can open the add-member form", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
@@ -55,6 +58,8 @@ test.describe("/members access boundary", () => {
 
     expect(response?.status()).toBe(200);
     await expect(page.getByRole("heading", { name: /members/i })).toBeVisible();
+
+    await page.getByRole("button", { name: "+ Add member" }).click();
     await expect(page.getByLabel(/name/i)).toBeVisible();
     await expect(page.getByLabel(/email/i)).toBeVisible();
     await expect(page.getByLabel(/role/i)).toBeVisible();
