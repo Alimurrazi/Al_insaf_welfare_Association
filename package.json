@@ -3,14 +3,14 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "predev": "prisma dev --name al-insaf --detach",
+    "predev": "docker compose up -d postgres",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "pretest": "prisma dev --name al-insaf-test --detach",
+    "pretest": "docker compose up -d postgres",
     "test": "vitest run",
-    "pretest:watch": "prisma dev --name al-insaf-test --detach",
+    "pretest:watch": "docker compose up -d postgres",
     "test:watch": "vitest",
     "test:e2e": "playwright test"
   },

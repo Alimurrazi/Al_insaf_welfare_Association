@@ -1,5 +1,10 @@
 import { defineConfig } from "@playwright/test";
 
+// Defaults to 3000; overridable via E2E_PORT for a machine where something
+// else already owns 3000 (e.g. an unrelated dev server), so the suite
+// doesn't silently run against the wrong app.
+const port = Number(process.env.E2E_PORT) || 3000;
+
 export default defineConfig({
   testDir: "./e2e",
   fullyParallel: true,
@@ -12,12 +17,12 @@ export default defineConfig({
   // 0"). Running serially avoids both at the cost of e2e suite speed.
   workers: 1,
   webServer: {
-    command: "npm run dev",
-    url: "http://localhost:3000",
+    command: `npm run dev -- -p ${port}`,
+    url: `http://localhost:${port}`,
     reuseExistingServer: !process.env.CI,
     timeout: 60_000,
   },
   use: {
-    baseURL: "http://localhost:3000",
+    baseURL: `http://localhost:${port}`,
   },
 });
