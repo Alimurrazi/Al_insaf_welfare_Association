@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import {
   fieldHintClasses,
   fieldLabelClasses,
@@ -8,11 +9,8 @@ import {
   formClasses,
   inputClasses,
   primaryButtonClasses,
-  rowAmountClasses,
-  rowMutedClasses,
-  rowNoteClasses,
-  rowPrimaryClasses,
   secondaryButtonClasses,
+  TOPUPS_ROW_GRID_CLASSES,
 } from "@/components/styles";
 import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
 
@@ -38,25 +36,28 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
-        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
-          <span className={rowPrimaryClasses}>{memberName}</span>
-          <span className={rowMutedClasses}>
-            — {topup.year} OTP #{topup.otpNumber} —
-          </span>
-          <span className={rowAmountClasses}>{formatCurrency(topup.amount)}</span>
-          <span className={rowMutedClasses}>— paid {formatDate(topup.paidDate)}</span>
-          {topup.note && <span className={rowNoteClasses}>— {topup.note}</span>}
+      <div className={`${TOPUPS_ROW_GRID_CLASSES} border-t border-line px-6 py-3.5 text-sm`}>
+        <span className="font-semibold text-ink">{memberName}</span>
+        <span className="text-ink-soft">{topup.year}</span>
+        <span className="text-ink-soft">Installment #{topup.otpNumber}</span>
+        <span className="font-mono font-semibold tabular-nums text-accent">{formatCurrency(topup.amount)}</span>
+        <span className="text-ink-soft">{formatDate(topup.paidDate)}</span>
+        <span className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit top-up for ${memberName}`}
+            className="rounded-md p-1.5 text-ink-soft transition-colors hover:bg-accent-soft hover:text-accent"
+          >
+            <Pencil className="size-4" />
+          </button>
         </span>
-        <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
-          Edit
-        </button>
-      </li>
+      </div>
     );
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-4">
+    <div className="border-t border-line p-4">
       <form
         action={async (formData) => {
           await editTopup(formData);
@@ -137,6 +138,6 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
           </button>
         </div>
       </form>
-    </li>
+    </div>
   );
 }

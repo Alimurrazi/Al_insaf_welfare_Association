@@ -22,3 +22,14 @@ export async function getDashboardSummary() {
     balance: totalCollected - totalSpent,
   };
 }
+
+// A member's contribution as a percentage of the group total, rounded to one
+// decimal place. There's no stored land-purchase target yet (see
+// UI-IMPROVEMENTS.md "Deferred"), so this approximates "your share of the
+// pool" rather than "your share of the parcel" — the closest motivating
+// figure buildable from data that already exists.
+export function getContributionSharePercent(personalPaid: number, groupTotal: number): number {
+  if (groupTotal <= 0) return 0;
+  const percent = (personalPaid / groupTotal) * 100;
+  return Math.round(Math.min(percent, 100) * 10) / 10;
+}

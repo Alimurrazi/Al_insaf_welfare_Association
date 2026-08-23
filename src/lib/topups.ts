@@ -74,6 +74,19 @@ export async function listTopupsForMember(memberId: string) {
   });
 }
 
+// Pure filter helper over an already-fetched list — the Top-ups page
+// filters by installment cycle (otpNumber) for display, following the same
+// pattern as `filterExpenses`/`filterDeposits`.
+export function filterTopups<T extends { otpNumber: number }>(
+  topups: T[],
+  filter: { otpNumber?: number },
+): T[] {
+  return topups.filter((topup) => {
+    if (filter.otpNumber && topup.otpNumber !== filter.otpNumber) return false;
+    return true;
+  });
+}
+
 export async function createTopup(actorId: string, input: TopupInput) {
   return prisma.$transaction(async (tx) => {
     const member = await tx.member.findUnique({ where: { id: input.memberId } });

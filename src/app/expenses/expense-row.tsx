@@ -1,16 +1,14 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import {
+  EXPENSES_ROW_GRID_CLASSES,
   fieldLabelClasses,
   formActionsClasses,
   formClasses,
   inputClasses,
   primaryButtonClasses,
-  rowAmountClasses,
-  rowMutedClasses,
-  rowNoteClasses,
-  rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
 import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
@@ -27,34 +25,44 @@ interface ExpenseRowProps {
   // omit this prop entirely for a Member-role viewer rather than passing a
   // server action that would just reject at the auth boundary anyway.
   editExpense?: (formData: FormData) => Promise<void>;
+  // Cumulative fund spend as of this expense's date — computed at render
+  // time by `withRunningTotal`, not stored (see UI-IMPROVEMENTS.md item 12).
+  runningTotal: number;
 }
 
 // Editing toggles into a labeled form on demand rather than always rendering
 // one, following the same pattern as DepositRow/TopupRow/MemberRow.
-export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
+export function ExpenseRow({ expense, editExpense, runningTotal }: ExpenseRowProps) {
   const [editing, setEditing] = useState(false);
 
   if (!editing || !editExpense) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
-        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
-          <span className={rowMutedClasses}>{formatDate(expense.date)} —</span>
-          <span className={rowPrimaryClasses}>{expense.category}</span>
-          <span className={rowMutedClasses}>—</span>
-          <span className={rowAmountClasses}>{formatCurrency(expense.amount)}</span>
-          {expense.note && <span className={rowNoteClasses}>— {expense.note}</span>}
+      <div className={`${EXPENSES_ROW_GRID_CLASSES} border-t border-line px-6 py-3.5 text-sm`}>
+        <span className="text-ink-soft">{formatDate(expense.date)}</span>
+        <span className="truncate font-semibold text-ink">{expense.note ?? expense.category}</span>
+        <span className="w-fit rounded-md bg-accent-soft px-2.5 py-1 text-xs font-semibold text-accent">
+          {expense.category}
         </span>
-        {editExpense && (
-          <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
-            Edit
-          </button>
-        )}
-      </li>
+        <span className="font-mono font-semibold tabular-nums text-ink">{formatCurrency(expense.amount)}</span>
+        <span className="font-mono text-ink-soft tabular-nums">{formatCurrency(runningTotal)}</span>
+        <span className="flex justify-end">
+          {editExpense && (
+            <button
+              type="button"
+              onClick={() => setEditing(true)}
+              aria-label={`Edit expense: ${expense.category}`}
+              className="rounded-md p-1.5 text-ink-soft transition-colors hover:bg-accent-soft hover:text-accent"
+            >
+              <Pencil className="size-4" />
+            </button>
+          )}
+        </span>
+      </div>
     );
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-4">
+    <div className="border-t border-line p-4">
       <form
         action={async (formData) => {
           await editExpense(formData);
@@ -102,6 +110,6 @@ export function ExpenseRow({ expense, editExpense }: ExpenseRowProps) {
           </button>
         </div>
       </form>
-    </li>
+    </div>
   );
 }

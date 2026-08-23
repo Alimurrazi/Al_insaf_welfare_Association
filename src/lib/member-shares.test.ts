@@ -3,9 +3,11 @@ import { prisma } from "./prisma";
 import { MemberNotFoundError } from "./members";
 import {
   addMemberShare,
+  getRecentShareChanges,
   getShareCountAsOf,
   listMemberShares,
   listSharesForMembers,
+  summarizeShareChanges,
   validateMemberShareInput,
 } from "./member-shares";
 import type { MemberShareModel } from "@/generated/prisma/models/MemberShare";
@@ -209,6 +211,176 @@ describe("member-shares service", () => {
     it("works regardless of the input array's order", () => {
       const shares = [share(1, "2024-01-01"), share(2, "2026-01-01"), share(3, "2025-01-01")];
       expect(getShareCountAsOf(shares, new Date("2025-06-01"))).toBe(3);
+    });
+  });
+
+  describe("summarizeShareChanges", () => {
+    // Pure function over an already-fetched, most-recent-first array (e.g.
+    // from `listMemberShares`) — no DB access, so plain fixture objects
+    // suffice.
+    function share(shareCount: number, effectiveFrom: string): MemberShareModel {
+      return {
+        id: `share-${effectiveFrom}`,
+        memberId: "member-1",
+        shareCount,
+        effectiveFrom: new Date(effectiveFrom),
+        createdAt: new Date(effectiveFrom),
+      };
+    }
+
+    it("describes each transition, most-recent first, ending with the initial registration", () => {
+      const shares = [share(3, "2026-01-01"), share(1, "2024-01-01")];
+      expect(summarizeShareChanges(shares)).toEqual([
+        "Shares changed from 1 to 3, effective 1 Jan 2026",
+        "Registered with 1 share, effective 1 Jan 2024",
+      ]);
+    });
+
+    it("uses singular 'share' for a registration or transition to/from exactly 1", () => {
+      const shares = [share(1, "2025-06-01")];
+      expect(summarizeShareChanges(shares)).toEqual(["Registered with 1 share, effective 1 Jun 2025"]);
+    });
+
+    it("works regardless of the input array's order (sorts internally by effectiveFrom)", () => {
+      const shares = [share(1, "2024-01-01"), share(3, "2026-01-01")];
+      expect(summarizeShareChanges(shares)).toEqual([
+        "Shares changed from 1 to 3, effective 1 Jan 2026",
+        "Registered with 1 share, effective 1 Jan 2024",
+      ]);
+    });
+
+    it("returns an empty array for an empty share history", () => {
+      expect(summarizeShareChanges([])).toEqual([]);
+    });
+  });
+
+  describe("getRecentShareChanges", () => {
+    // Pure function over already-fetched member+shares data (e.g. from
+    // `listSharesForMembers` joined with member name/id) — no DB access, so
+    // plain fixture objects suffice, same style as `summarizeShareChanges`.
+    function share(shareCount: number, effectiveFrom: string) {
+      return { shareCount, effectiveFrom: new Date(effectiveFrom) };
+    }
+
+    function member(id: string, name: string, shares: { shareCount: number; effectiveFrom: Date }[]) {
+      return { id, name, shares };
+    }
+
+    // Local stand-in for the not-yet-exported `ShareChangeEntry` type, so
+    // these tests don't rely on an import that doesn't exist yet.
+    type ShareChangeEntryFixture = {
+      memberId: string;
+      memberName: string;
+      fromCount: number;
+      toCount: number;
+      effectiveFrom: Date;
+    };
+
+    it("pairs a single member's rows chronologically, with fromCount 0 for the earliest row", () => {
+      const members = [
+        member("m1", "Alice", [share(1, "2020-01-01"), share(5, "2022-01-01")]),
+      ];
+
+      expect(getRecentShareChanges(members, 10)).toEqual([
+        {
+          memberId: "m1",
+          memberName: "Alice",
+          fromCount: 1,
+          toCount: 5,
+          effectiveFrom: new Date("2022-01-01"),
+        },
+        {
+          memberId: "m1",
+          memberName: "Alice",
+          fromCount: 0,
+          toCount: 1,
+          effectiveFrom: new Date("2020-01-01"),
+        },
+      ]);
+    });
+
+    it("merges entries across multiple members into one list sorted by effectiveFrom descending", () => {
+      const members = [
+        member("m1", "Alice", [share(1, "2024-01-01")]),
+        member("m2", "Bob", [share(2, "2025-01-01")]),
+        member("m3", "Carol", [share(3, "2023-01-01")]),
+      ];
+
+      const result = getRecentShareChanges(members, 10);
+
+      expect(result.map((e: ShareChangeEntryFixture) => e.memberId)).toEqual(["m2", "m1", "m3"]);
+      expect(result.map((e: ShareChangeEntryFixture) => e.effectiveFrom.toISOString())).toEqual([
+        new Date("2025-01-01").toISOString(),
+        new Date("2024-01-01").toISOString(),
+        new Date("2023-01-01").toISOString(),
+      ]);
+    });
+
+    it("caps the returned list at `limit`, keeping only the most recent entries", () => {
+      const members = [
+        member("m1", "Alice", [share(1, "2024-01-01")]),
+        member("m2", "Bob", [share(2, "2025-01-01")]),
+        member("m3", "Carol", [share(3, "2023-01-01")]),
+      ];
+
+      const result = getRecentShareChanges(members, 2);
+
+      expect(result).toHaveLength(2);
+      expect(result.map((e: ShareChangeEntryFixture) => e.memberId)).toEqual(["m2", "m1"]);
+    });
+
+    it("contributes no entries for a member with zero share rows", () => {
+      const members = [
+        member("m1", "Alice", []),
+        member("m2", "Bob", [share(2, "2025-01-01")]),
+      ];
+
+      const result = getRecentShareChanges(members, 10);
+
+      expect(result).toHaveLength(1);
+      expect(result[0].memberId).toBe("m2");
+    });
+
+    it("attaches the correct memberId/memberName to each entry once merged and sorted across members", () => {
+      const members = [
+        member("m1", "Alice", [share(1, "2020-01-01"), share(5, "2022-01-01")]),
+        member("m2", "Bob", [share(2, "2021-01-01")]),
+      ];
+
+      const result = getRecentShareChanges(members, 10);
+
+      expect(result).toEqual([
+        {
+          memberId: "m1",
+          memberName: "Alice",
+          fromCount: 1,
+          toCount: 5,
+          effectiveFrom: new Date("2022-01-01"),
+        },
+        {
+          memberId: "m2",
+          memberName: "Bob",
+          fromCount: 0,
+          toCount: 2,
+          effectiveFrom: new Date("2021-01-01"),
+        },
+        {
+          memberId: "m1",
+          memberName: "Alice",
+          fromCount: 0,
+          toCount: 1,
+          effectiveFrom: new Date("2020-01-01"),
+        },
+      ]);
+    });
+
+    it("returns an empty array when limit is 0", () => {
+      const members = [member("m1", "Alice", [share(1, "2020-01-01")])];
+      expect(getRecentShareChanges(members, 0)).toEqual([]);
+    });
+
+    it("returns an empty array for an empty members list", () => {
+      expect(getRecentShareChanges([], 10)).toEqual([]);
     });
   });
 });

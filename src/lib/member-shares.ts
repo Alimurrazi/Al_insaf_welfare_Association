@@ -1,5 +1,6 @@
 import { prisma } from "./prisma";
 import { MemberNotFoundError } from "./members";
+import { formatDate } from "./format";
 
 export interface MemberShareInput {
   shareCount: number;
@@ -85,6 +86,75 @@ export async function listSharesForMembers(memberIds: string[]) {
   }
 
   return byMember;
+}
+
+// Turns a most-recent-first share history (see `listMemberShares`) into
+// human-readable sentences for each transition — no free-text reason is
+// stored anywhere (see UI-IMPROVEMENTS.md "Deferred"), so this is a generic
+// diff, same idea as `describeActivityEntry`'s MemberShare case, just
+// surfaced inline on the Members page instead of only in the activity feed.
+export function summarizeShareChanges(
+  shareHistory: { shareCount: number; effectiveFrom: Date }[],
+): string[] {
+  const ascending = [...shareHistory].sort(
+    (a, b) => new Date(a.effectiveFrom).getTime() - new Date(b.effectiveFrom).getTime(),
+  );
+
+  const lines: string[] = [];
+  for (let i = 0; i < ascending.length; i++) {
+    const entry = ascending[i];
+    const previous = ascending[i - 1];
+    const date = formatDate(entry.effectiveFrom);
+
+    if (!previous) {
+      lines.push(`Registered with ${entry.shareCount} ${entry.shareCount === 1 ? "share" : "shares"}, effective ${date}`);
+    } else {
+      lines.push(`Shares changed from ${previous.shareCount} to ${entry.shareCount}, effective ${date}`);
+    }
+  }
+
+  return lines.reverse();
+}
+
+export interface ShareChangeEntry {
+  memberId: string;
+  memberName: string;
+  fromCount: number;
+  toCount: number;
+  effectiveFrom: Date;
+}
+
+// Cross-member feed for the Members page's "Share Allocation History"
+// sidebar — same chronological pairing as `summarizeShareChanges` (fromCount
+// 0 for a member's earliest row), but returning structured entries merged
+// across every member and sorted most-recent-first, since the sidebar shows
+// one combined feed rather than one member's history at a time.
+export function getRecentShareChanges(
+  membersWithShares: { id: string; name: string; shares: { shareCount: number; effectiveFrom: Date }[] }[],
+  limit: number,
+): ShareChangeEntry[] {
+  const entries: ShareChangeEntry[] = [];
+
+  for (const member of membersWithShares) {
+    const ascending = [...member.shares].sort(
+      (a, b) => new Date(a.effectiveFrom).getTime() - new Date(b.effectiveFrom).getTime(),
+    );
+
+    for (let i = 0; i < ascending.length; i++) {
+      const entry = ascending[i];
+      const previous = ascending[i - 1];
+      entries.push({
+        memberId: member.id,
+        memberName: member.name,
+        fromCount: previous?.shareCount ?? 0,
+        toCount: entry.shareCount,
+        effectiveFrom: entry.effectiveFrom,
+      });
+    }
+  }
+
+  entries.sort((a, b) => b.effectiveFrom.getTime() - a.effectiveFrom.getTime());
+  return entries.slice(0, limit);
 }
 
 // Past months must always calculate against the share count effective at

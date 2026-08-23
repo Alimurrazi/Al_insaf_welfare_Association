@@ -17,6 +17,10 @@ import { MONTH_NAMES } from "@/lib/month-names";
 interface AddDepositFormProps {
   members: { id: string; name: string }[];
   addDeposit: (formData: FormData) => Promise<void>;
+  // Pre-selects a member and opens the modal automatically — used by the
+  // dashboard's per-row "Log Payment" shortcut (`/deposits?memberId=...`),
+  // so an admin doesn't have to re-find the member in the dropdown.
+  defaultMemberId?: string;
 }
 
 // Month/year are deliberately separate from paid date (a payment can be
@@ -35,8 +39,8 @@ interface AddDepositFormProps {
 // and would undo the "keep everything, just change Month" workflow this
 // form exists for. The modal itself stays open after a successful save for
 // the same reason — closing it would kill the "add another month" flow.
-export function AddDepositForm({ members, addDeposit }: AddDepositFormProps) {
-  const [memberId, setMemberId] = useState("");
+export function AddDepositForm({ members, addDeposit, defaultMemberId }: AddDepositFormProps) {
+  const [memberId, setMemberId] = useState(defaultMemberId ?? "");
   const [month, setMonth] = useState("");
   const [year, setYear] = useState("");
   const [amount, setAmount] = useState("");
@@ -61,7 +65,7 @@ export function AddDepositForm({ members, addDeposit }: AddDepositFormProps) {
   }
 
   return (
-    <Modal triggerLabel="+ Add deposit" title="Add a deposit">
+    <Modal triggerLabel="+ Add deposit" title="Add a deposit" defaultOpen={!!defaultMemberId}>
       <form onSubmit={handleSubmit} className={formClasses}>
         <label className={fieldLabelClasses}>
           Member

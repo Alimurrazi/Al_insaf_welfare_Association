@@ -40,3 +40,39 @@ export const primaryButtonClasses =
   "rounded-md bg-accent px-6 py-3 text-base font-semibold text-white transition-colors hover:bg-accent-strong";
 export const secondaryButtonClasses =
   "rounded-md border border-line px-6 py-3 text-base font-medium text-ink transition-colors hover:border-accent hover:text-accent";
+// Small in-row action button — e.g. "Log Payment" on a table row — smaller
+// than the standard buttons above, which are sized for a form's one primary
+// action rather than a repeated per-row action.
+export const rowActionButtonClasses =
+  "rounded-md bg-accent px-3 py-1.5 text-xs font-semibold text-white transition-colors hover:bg-accent-strong";
+
+// Page/card measurements adopted from the "al-insaf" Figma file (see
+// UI-IMPROVEMENTS.md §10) rather than the ad hoc px-6/py-12 every page used
+// before: 40px side margins + top padding, 32px between major sections, 28px
+// card padding, 24px gutter between grid tiles, 16px between rows inside a
+// card. max-w-7xl (not full-bleed like the Figma frames, which are all fixed
+// at 1440px) keeps rows readable on very wide monitors instead of stretching
+// a table edge-to-edge.
+export const pageContainerClasses = "mx-auto flex w-full max-w-7xl flex-col gap-8 px-10 py-10";
+export const cardClasses = "rounded-2xl border border-line bg-surface p-7";
+export const statTileClasses =
+  "flex flex-1 items-center gap-5 rounded-2xl border border-line bg-surface p-6";
+export const statTileIconClasses = "flex size-12 shrink-0 items-center justify-center rounded-xl";
+
+// Table column-grid templates, shared between each page.tsx's header row
+// (a Server Component) and its *-row.tsx client component's data rows —
+// MUST live in a non-"use client" module: a plain string exported from a
+// "use client" file becomes a server-side stub when imported into a Server
+// Component, and coercing that stub to a string (as `${CONST} ...` does)
+// serializes the stub function's source instead of the class list.
+export const DEPOSITS_ROW_GRID_CLASSES =
+  "grid grid-cols-[minmax(160px,1.5fr)_110px_110px_130px_minmax(120px,1fr)_70px] items-center gap-4";
+export const TOPUPS_ROW_GRID_CLASSES =
+  "grid grid-cols-[minmax(200px,1.7fr)_90px_160px_130px_minmax(120px,1fr)_70px] items-center gap-4";
+export const EXPENSES_ROW_GRID_CLASSES =
+  "grid grid-cols-[130px_minmax(220px,2fr)_160px_130px_150px_70px] items-center gap-4";
+// No Status column (unlike the Figma table): the schema has no
+// active/inactive concept, so an always-"Active" badge would just be
+// decorative, not real data.
+export const MEMBERS_ROW_GRID_CLASSES =
+  "grid grid-cols-[minmax(160px,1.4fr)_minmax(180px,1.6fr)_110px_150px_80px] items-center gap-4";

@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "./prisma";
-import { getPaidMonths, getUnpaidMembers } from "./payment-status";
+import { getNextPaymentDue, getPaidMonths, getUnpaidMembers } from "./payment-status";
 
 describe("getPaidMonths", () => {
   // Pure function over an already-fetched deposit list (e.g. from
@@ -32,6 +32,26 @@ describe("getPaidMonths", () => {
   });
 });
 
+describe("getNextPaymentDue", () => {
+  // Pure function over a given date — no DB access needed.
+  it("returns the 1st of the following month", () => {
+    const due = getNextPaymentDue(new Date("2026-08-20T00:00:00.000Z"));
+    expect(due.toISOString()).toBe(new Date("2026-09-01T00:00:00.000Z").toISOString());
+  });
+
+  it("rolls over into the next year from December", () => {
+    const due = getNextPaymentDue(new Date("2026-12-05T00:00:00.000Z"));
+    expect(due.toISOString()).toBe(new Date("2027-01-01T00:00:00.000Z").toISOString());
+  });
+
+  it("uses UTC fields, matching how dates are stored and formatted elsewhere", () => {
+    const due = getNextPaymentDue(new Date("2026-01-31T23:00:00.000Z"));
+    expect(due.getUTCFullYear()).toBe(2026);
+    expect(due.getUTCMonth()).toBe(1); // February, 0-indexed
+    expect(due.getUTCDate()).toBe(1);
+  });
+});
+
 describe("getUnpaidMembers", () => {
   const PREFIX = "payment-status-svc-test-";
 
@@ -42,6 +62,9 @@ describe("getUnpaidMembers", () => {
   }
 
   afterAll(async () => {
+    // FK-safe order: MemberShare and MonthlyDeposit reference members via
+    // required FKs, so delete them first (same pattern as member-shares.test.ts).
+    await prisma.memberShare.deleteMany({ where: { member: { email: { startsWith: PREFIX } } } });
     await prisma.monthlyDeposit.deleteMany({ where: { member: { email: { startsWith: PREFIX } } } });
     await prisma.member.deleteMany({ where: { email: { startsWith: PREFIX } } });
     await prisma.$disconnect();
@@ -85,5 +108,49 @@ describe("getUnpaidMembers", () => {
 
     const unpaid = await getUnpaidMembers(8, 2026);
     expect(unpaid.map((m) => m.id)).toContain(member.id);
+  });
+
+  // effectiveFrom dates below are fixed in the past (well before any
+  // plausible test run date) so `getShareCountAsOf` resolves them against
+  // "now" the same way regardless of when the suite runs.
+  it("includes the member's current shareCount, from a single share row", async () => {
+    const member = await makeMember("one-share");
+
+    await prisma.memberShare.create({
+      data: { memberId: member.id, shareCount: 3, effectiveFrom: new Date("2020-01-01") },
+    });
+
+    const unpaid = await getUnpaidMembers(8, 2026);
+    const found = unpaid.find((m) => m.id === member.id);
+
+    expect(found).toBeDefined();
+    expect(found?.shareCount).toBe(3);
+  });
+
+  it("uses the latest share row when share count changed over time, ignoring the older one", async () => {
+    const member = await makeMember("share-history");
+
+    await prisma.memberShare.create({
+      data: { memberId: member.id, shareCount: 1, effectiveFrom: new Date("2020-01-01") },
+    });
+    await prisma.memberShare.create({
+      data: { memberId: member.id, shareCount: 5, effectiveFrom: new Date("2022-01-01") },
+    });
+
+    const unpaid = await getUnpaidMembers(8, 2026);
+    const found = unpaid.find((m) => m.id === member.id);
+
+    expect(found).toBeDefined();
+    expect(found?.shareCount).toBe(5);
+  });
+
+  it("returns shareCount 0 for a member with no share history", async () => {
+    const member = await makeMember("no-shares");
+
+    const unpaid = await getUnpaidMembers(8, 2026);
+    const found = unpaid.find((m) => m.id === member.id);
+
+    expect(found).toBeDefined();
+    expect(found?.shareCount).toBe(0);
   });
 });

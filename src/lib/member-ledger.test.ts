@@ -176,4 +176,22 @@ describe("getMemberLedger", () => {
     expect(ledger.totalPaid).toBe(111 + 2222);
     expect(ledger.currentShareCount).toBe(5);
   });
+
+  it("returns transactions merging deposits and topups, most-recent-first, with a correct running balance", async () => {
+    const actor = await makeActor("transactions");
+    const member = await makeTargetMember("transactions");
+
+    await makeDeposit(actor.id, member.id, 1, 2026, 100, "2026-01-01");
+    await makeTopup(actor.id, member.id, 1, 2026, 5000, "2026-01-15");
+    await makeDeposit(actor.id, member.id, 2, 2026, 150, "2026-02-01");
+
+    const ledger = await getMemberLedger(member.id, new Date("2026-06-01"));
+
+    expect(ledger.transactions).toHaveLength(3);
+    // Most-recent-first for display...
+    expect(ledger.transactions.map((t) => t.amount)).toEqual([150, 5000, 100]);
+    // ...but the running balance still reflects chronological (oldest-first)
+    // accumulation: 100 -> 100+5000=5100 -> 5100+150=5250.
+    expect(ledger.transactions.map((t) => t.balance)).toEqual([5250, 5100, 100]);
+  });
 });

@@ -10,9 +10,12 @@ interface TopNavLinksProps {
   role: Role;
 }
 
+// Bottom border-indicator (matching the Figma nav's underline tab style)
+// rather than the old background-pill highlight — border-b-2 sits on both
+// states so the active tab's border-in doesn't shift the row's height.
 const baseLinkClasses =
-  "rounded-md px-3 py-2 text-base text-ink transition-colors hover:bg-accent-soft hover:text-accent";
-const activeLinkClasses = "bg-accent-soft font-semibold text-accent";
+  "flex h-full items-center border-b-2 border-transparent px-3 text-sm font-medium text-ink-soft transition-colors hover:text-accent";
+const activeLinkClasses = "border-accent font-semibold text-accent";
 
 function linkClass(active: boolean) {
   return active ? `${baseLinkClasses} ${activeLinkClasses}` : baseLinkClasses;
@@ -50,15 +53,19 @@ function ManageMenu({ pathname }: { pathname: string }) {
   }, [open]);
 
   return (
-    <div ref={containerRef} className="relative">
+    <div ref={containerRef} className="relative flex h-full items-center">
       <button
         type="button"
         onClick={() => setOpen((value) => !value)}
         aria-expanded={open}
         aria-haspopup="menu"
-        className={linkClass(isActive)}
+        className={
+          "flex items-center gap-1.5 rounded-lg bg-accent-soft px-3 py-1.5 text-sm font-semibold text-accent transition-colors hover:bg-accent-soft/70" +
+          (isActive ? " ring-1 ring-inset ring-accent" : "")
+        }
       >
-        Manage ▾
+        Manage
+        <span aria-hidden="true">▾</span>
       </button>
       {open && (
         <div
@@ -106,14 +113,12 @@ export function TopNavLinks({ userId, role }: TopNavLinksProps) {
   const isLedgerGrid = pathname === "/ledger" || (pathname.startsWith("/ledger/") && !isOwnLedger);
 
   return (
-    <nav className="flex flex-wrap items-center gap-1 text-base">
-      <Link
-        href="/"
-        className={`rounded-md px-3 py-2 font-display font-semibold text-ink transition-colors hover:bg-accent-soft hover:text-accent ${
-          pathname === "/" ? activeLinkClasses : ""
-        }`}
-      >
-        Al-Insaf
+    // overflow-x-auto (not flex-wrap) so the row never breaks the header's
+    // fixed 72px height on phones — most members use this app on-phone (see
+    // UI-IMPROVEMENTS.md) — it scrolls horizontally there instead.
+    <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto">
+      <Link href="/" className={linkClass(pathname === "/")}>
+        Dashboard
       </Link>
       <Link href={ownLedgerHref} className={linkClass(isOwnLedger)}>
         My Passbook

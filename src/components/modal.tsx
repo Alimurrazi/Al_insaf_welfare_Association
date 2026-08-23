@@ -7,6 +7,11 @@ interface ModalProps {
   triggerLabel: string;
   title: string;
   children: ReactNode;
+  // Opens automatically on mount — used when a link elsewhere in the app
+  // (e.g. the dashboard's "Log Payment" shortcut) deep-links straight into
+  // this modal's form via a query param, rather than requiring an extra
+  // click on the trigger button.
+  defaultOpen?: boolean;
 }
 
 // Wraps the native <dialog> element rather than a hand-rolled overlay div —
@@ -15,9 +20,9 @@ interface ModalProps {
 // behavior: this component only opens and closes the dialog, so a form that
 // wants to stay open after saving (e.g. AddDepositForm's "add another month"
 // workflow) can, without fighting the modal for control.
-export function Modal({ triggerLabel, title, children }: ModalProps) {
+export function Modal({ triggerLabel, title, children, defaultOpen = false }: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(false);
+  const [open, setOpen] = useState(defaultOpen);
 
   useEffect(() => {
     const dialog = dialogRef.current;

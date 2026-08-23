@@ -1,17 +1,15 @@
 "use client";
 
 import { useState } from "react";
+import { Pencil } from "lucide-react";
 import {
+  DEPOSITS_ROW_GRID_CLASSES,
   fieldHintClasses,
   fieldLabelClasses,
   formActionsClasses,
   formClasses,
   inputClasses,
   primaryButtonClasses,
-  rowAmountClasses,
-  rowMutedClasses,
-  rowNoteClasses,
-  rowPrimaryClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
 import { formatCurrency, formatDate, formatMonthYear, toDateInputValue } from "@/lib/format";
@@ -39,25 +37,28 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
 
   if (!editing) {
     return (
-      <li className="flex items-center justify-between gap-3 rounded-md border border-line bg-surface p-4 text-sm text-ink">
-        <span className="flex flex-wrap items-center gap-x-2 font-mono tabular-nums">
-          <span className={rowPrimaryClasses}>{memberName}</span>
-          <span className={rowMutedClasses}>
-            — {formatMonthYear(deposit.month, deposit.year)} —
-          </span>
-          <span className={rowAmountClasses}>{formatCurrency(deposit.amount)}</span>
-          <span className={rowMutedClasses}>— paid {formatDate(deposit.paidDate)}</span>
-          {deposit.note && <span className={rowNoteClasses}>— {deposit.note}</span>}
+      <div className={`${DEPOSITS_ROW_GRID_CLASSES} border-t border-line px-6 py-3.5 text-sm`}>
+        <span className="font-semibold text-ink">{memberName}</span>
+        <span className="text-ink-soft">{formatMonthYear(deposit.month, deposit.year)}</span>
+        <span className="font-mono font-semibold tabular-nums text-accent">{formatCurrency(deposit.amount)}</span>
+        <span className="text-ink-soft">{formatDate(deposit.paidDate)}</span>
+        <span className="truncate italic text-ink-soft">{deposit.note}</span>
+        <span className="flex justify-end">
+          <button
+            type="button"
+            onClick={() => setEditing(true)}
+            aria-label={`Edit deposit for ${memberName}`}
+            className="rounded-md p-1.5 text-ink-soft transition-colors hover:bg-accent-soft hover:text-accent"
+          >
+            <Pencil className="size-4" />
+          </button>
         </span>
-        <button type="button" onClick={() => setEditing(true)} className={secondaryButtonClasses}>
-          Edit
-        </button>
-      </li>
+      </div>
     );
   }
 
   return (
-    <li className="rounded-md border border-line bg-surface p-4">
+    <div className="border-t border-line p-4">
       <form
         action={async (formData) => {
           await editDeposit(formData);
@@ -138,6 +139,6 @@ export function DepositRow({ deposit, memberName, members, editDeposit }: Deposi
           </button>
         </div>
       </form>
-    </li>
+    </div>
   );
 }

@@ -1,7 +1,8 @@
+import Link from "next/link";
+import { Landmark, LogOut } from "lucide-react";
 import { auth, signOut } from "@/auth";
 import { RoleBadge } from "./role-badge";
 import { TopNavLinks } from "./top-nav-links";
-import { secondaryButtonClasses } from "./styles";
 
 // Rendered from the root layout so every authenticated screen — not just
 // the home page — has a way back to the other screens, rather than only
@@ -12,27 +13,52 @@ export async function TopNav() {
   if (!session) return null;
 
   const user = session.user;
+  const displayName = user.name ?? user.email ?? "";
+  const initial = displayName.charAt(0).toUpperCase();
 
   return (
-    <header className="border-b border-line bg-surface">
-      <div className="flex flex-wrap items-center justify-between gap-3 px-6 py-3">
-        <TopNavLinks userId={user.id} role={user.role} />
+    <header className="flex h-[72px] items-stretch justify-between gap-4 border-b border-line bg-surface px-4 sm:px-10">
+      <Link href="/" className="flex shrink-0 items-center gap-3">
+        <span className="flex size-9 items-center justify-center rounded-lg bg-accent text-white">
+          <Landmark className="size-5" />
+        </span>
+        <span className="flex flex-col leading-none">
+          <span className="font-display text-base font-bold text-accent">Al-Insaf</span>
+          <span className="text-xs uppercase tracking-wide text-ink-soft">Welfare Association</span>
+        </span>
+      </Link>
 
-        <div className="flex items-center gap-4 text-sm">
-          <span className="flex items-center gap-2 text-ink-soft">
-            {user.name ?? user.email} <RoleBadge role={user.role} />
-          </span>
-          <form
-            action={async () => {
-              "use server";
-              await signOut({ redirectTo: "/sign-in" });
-            }}
+      <TopNavLinks userId={user.id} role={user.role} />
+
+      <div className="flex shrink-0 items-center gap-4">
+        <div className="hidden h-6 w-px bg-line sm:block" />
+        <div className="flex items-center gap-2.5">
+          <span
+            aria-hidden="true"
+            className="flex size-8 items-center justify-center rounded-full bg-accent-soft text-sm font-semibold text-accent"
           >
-            <button type="submit" className={secondaryButtonClasses}>
-              Sign out
-            </button>
-          </form>
+            {initial}
+          </span>
+          <span className="hidden flex-col leading-tight sm:flex">
+            <span className="text-sm font-medium text-ink">{displayName}</span>
+            <RoleBadge role={user.role} />
+          </span>
         </div>
+        <form
+          action={async () => {
+            "use server";
+            await signOut({ redirectTo: "/sign-in" });
+          }}
+        >
+          <button
+            type="submit"
+            aria-label="Sign out"
+            title="Sign out"
+            className="flex items-center rounded-md p-1.5 text-ink-soft transition-colors hover:bg-accent-soft hover:text-accent"
+          >
+            <LogOut className="size-[18px]" />
+          </button>
+        </form>
       </div>
     </header>
   );

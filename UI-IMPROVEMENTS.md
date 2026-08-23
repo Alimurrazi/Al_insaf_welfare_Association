@@ -8,9 +8,20 @@ the bottom.
 
 Suggested build order: 1 → 2 → 3 → 4 → 5 → 6, then 7–9 as follow-ups.
 
-**Status: 1, 2, 3, 4, 6, and 7 are implemented** (test-first for the new
-`src/lib` logic; unit suite + e2e specs updated and passing). Remaining:
-5 (Logbook tick view), 8 (charts), 9 (batch entry).
+**Status: 1, 2, 3, 4, 5, 6, 7, 10, 11, 12, 13, and 14 are implemented**
+(test-first for the new `src/lib` logic; unit suite + e2e specs updated and
+passing). Remaining: 8 (charts), 9 (batch entry).
+
+The whole app was also visually redesigned against the "al-insaf" Figma file
+(see §"Figma reference" below) — every screen now uses the spacing tokens in
+item 10, restyled top nav (logo, underline tab indicator, avatar-initial +
+role badge), and the table/card layouts described in items 11–14. Skipped
+per the Deferred section below: the Land Goal stat tile and Registry Share
+Value target (no stored fund goal), the password "Sign In as Admin" field,
+"Notify Unpaid" reminders, fabricated activity-feed audit metadata
+(Transaction Ref, Invoice Ref, Admin ID codes, etc.), and per-row "Amount
+Due"/Status badges on the dashboard and Members tables (no stored per-share
+price or member-active-status field to back them).
 
 ---
 
@@ -95,23 +106,18 @@ Status color rules (applies here and to the Logbook tick view below):
   `warn` token — gold is reserved for the ADMIN badge — so stay neutral for
   now.)
 
-## 5. Logbook grid — phone-friendly tick view
+## 5. Logbook grid — phone-friendly tick view ✅ done
 
 The 1400px sideways-scrolling table of `Tk 3000.00 (2026-08-15)` cells is the
-most hostile screen in the app on phones. In order of preference:
+most hostile screen in the app on phones.
 
-1. **Tick view by default**: each cell is just ✓ (tinted `accent-soft`) or
-   empty — matches the paper-logbook mental model. Tap a member's name for the
-   detailed passbook (already exists). The grid then needs far fewer pixels.
-2. At minimum: short amounts (`3,000`) without dates in cells — paid dates
-   live in the passbook.
-
-Either way:
-
-- **Highlight the current month's column** header so the eye lands where the
-  action is.
-- **Highlight the signed-in member's own row** (`accent-soft` background) —
-  "find yourself in the table" is the first thing every member does.
+*Implemented as tick view by default* (`src/app/ledger/page.tsx`): each cell
+is a ✓ tinted `accent-soft`, or a neutral `–` when unpaid — matches the
+paper-logbook mental model. More than one payment landing in the same
+month/cell (a real possibility per the schema) still shows a `×N` count
+rather than silently collapsing. Tap a member's name for the detailed
+passbook (already existed). The current month's column is highlighted, and
+the signed-in member's own row gets an `accent-soft` tint.
 
 ## 6. Activity feed — sentences, not database records ✅ done
 
@@ -174,13 +180,124 @@ Fits the existing model exactly: each checked row writes an independent
 
 ---
 
+## Figma reference (`al-insaf` file) — findings from a design review, not yet built
+
+The team's Figma file (9 frames: sign-in, dashboard-admin, deposits, top-ups,
+expenses, members, logbook, my-passbook, activity-feed) was reviewed against
+the current app and schema. Two rules apply to everything below:
+
+- **Currency: never `$`.** The Figma mockups render amounts as `$127,500`
+  etc. — that's a placeholder from the design tool, not a spec. Every amount
+  in this app renders via the existing `formatCurrency` (`Tk 1,27,500.00`,
+  `src/lib/format.ts`). Ignore `$` anywhere it appears in the designs.
+- **Spacing: follow the Figma file's measurements**, not ad hoc Tailwind
+  values — see the token table below, extracted directly from the file's
+  node positions (`get_metadata`/`get_variable_defs` — no variables are
+  defined in the file, so there are no named spacing tokens, only raw
+  pixel offsets between frames).
+
+### 10. Spacing/padding tokens extracted from Figma
+
+Measured from the `dashboard-admin` and `sign-in` frames (consistent across
+the other 7):
+
+| Purpose | Value | Closest Tailwind |
+|---|---|---|
+| Page/content side margin (left & right) | 40px | `px-10` |
+| Top padding under the nav bar | 40px | `pt-10` |
+| Gap between major dashboard sections (header → stat tiles → cards) | 32px | `gap-8` |
+| Card internal padding | 28px | `p-7` |
+| Gap between rows *inside* a card (e.g. Assigned Shares / Total Paid / Next Payment) | 16px | `gap-4` |
+| Gutter between grid tiles (the 4 stat tiles, the 2 dashboard cards) | 24px | `gap-6` |
+| Nav bar height | 72px | `h-18` (arbitrary — 72 isn't a default Tailwind step) |
+| Gap between nav tabs | 8px | `gap-2` |
+| Nav tab horizontal text inset | 12px | `px-3` |
+| Table row left inset | 16px | `pl-4` |
+| Table header row height | 35px | — |
+| Table data row height | 59px | — |
+| Sign-in card padding | 40px | `p-10` |
+| Sign-in card internal section gap (tagline → actions) | 24px–34px | `gap-6`/`gap-8` |
+
+**Current app doesn't match this today** — every page uses `px-6 py-12`
+(24px/48px) on a `max-w-5xl` centered column (`src/app/*/page.tsx`), not the
+Figma's 40px side margins on what reads as a full-width layout. Worth a
+deliberate decision (adopt the Figma numbers app-wide, or keep the current
+centered-column convention) before doing any layout work off these designs —
+don't silently drift page-by-page.
+
+### 11. Filters — Deposits & Top-ups search/filter bar (buildable now)
+
+Figma adds a search-by-member box to both, plus a Month/Year filter on
+Deposits and an Installment Cycle filter on Top-ups. No schema change —
+`listDeposits`/`listTopups` already return everything needed; filter the same
+way `expenses/page.tsx` already does via `searchParams`.
+
+### 12. Running-total columns (buildable now)
+
+- **Expenses**: a per-row "Running Total" column (Figma shows the balance
+  stepping down after each expense) — computed by summing rows in date order
+  while rendering, same idea as `sumExpenseAmounts` but cumulative instead of
+  total-only.
+- **My Passbook**: a "Ledger Balance" column that runs up with every deposit
+  and top-up. Purely a render-time cumulative sum over `ledger.deposits` +
+  `ledger.topups` merged and sorted by date — nothing stored, so it doesn't
+  conflict with the "never a running balance" rule in `CLAUDE.md`.
+
+### 13. Dashboard — passbook snapshot additions (buildable now)
+
+- **Next Payment Due**: computed (1st of next month) — no storage needed.
+- **"Your contributions account for X% of the acquired baseline parcel"**:
+  Figma implies a land-goal ratio we don't have (see Deferred), but an
+  approximation — personal total paid ÷ group total collected — is
+  computable from `getDashboardSummary` + `getMemberLedger` today. Wording
+  would need to say "of total contributions," not "of the parcel."
+- **Per-row "Log Payment" quick action** on the admin's unpaid-members list —
+  a link/modal straight into the existing `createDeposit` action, member and
+  current month pre-filled. No new capability, just a shortcut into an
+  existing form.
+
+### 14. Members — inline share-change summary (buildable now, generic only)
+
+Figma's "Share Allocation History" panel pairs each share change with a
+hand-written reason ("Approved milestone registry top-up commitment") — that
+text isn't stored anywhere and is Deferred below. But a **generic** sentence
+("Shares changed from 1 to 2, effective 15 Mar 2025") is buildable today,
+reusing the same diff logic `describeActivityEntry` already applies to
+`MemberShare` entries in the activity feed — just surfaced inline on the
+Members page too.
+
+---
+
 ## Deferred — needs data-model changes (explicitly out of scope for now)
 
-- **Land-purchase goal progress bar.** The single most motivating visual
-  ("Tk 4,20,000 of Tk 10,00,000 · 42%" as a plain horizontal bar at the top of
-  the dashboard), but nothing in the schema stores the target amount. Needs a
-  small admin-editable `settings`/`fund_goal` table (whose edits must write
-  `activity_log` entries, per domain rules). Revisit when a schema change is
-  on the table.
+- **Land-purchase goal progress bar** (Figma: "Land Goal" dashboard tile,
+  "Registry Share Value $X Target" on My Passbook). The single most
+  motivating visual ("Tk 4,20,000 of Tk 10,00,000 · 42%" as a plain
+  horizontal bar at the top of the dashboard), but nothing in the schema
+  stores the target amount. Needs a small admin-editable
+  `settings`/`fund_goal` table (whose edits must write `activity_log`
+  entries, per domain rules). Revisit when a schema change is on the table.
+- **Free-text reason on a share change** (Figma: "Approved milestone
+  registry top-up commitment" in the Share Allocation History panel).
+  `member_shares` only stores `shareCount`/`effectiveFrom` — no note field.
+  A generic auto-generated sentence is buildable now (see item 14); a real
+  admin-authored reason needs a new nullable column.
+- **Activity Feed's fabricated audit metadata** (Figma: Transaction Ref,
+  Invoice Ref, Destination account, Dispatch Method, Authority Ref, "Admin
+  ID: #02"-style codes). Checked `deposits.ts`/`expenses.ts`/
+  `member-shares.ts` — the activity log only ever stores the same raw model
+  fields the form collects (memberId, amount, date, note, etc.). None of
+  this metadata exists anywhere; reproducing it literally would mean adding
+  new columns to `expenses`/`annual_topups` (invoice ref, recipient,
+  destination), not just formatting existing data.
 - **Bengali/bilingual labels.** Worth deciding early so text passes aren't
   redone, but a later release.
+
+Two more Figma elements are blocked for reasons *other* than the data model,
+so they stay out of scope regardless:
+
+- **Password-based "Sign In as Admin" field** on the sign-in screen —
+  conflicts with the Google-only allow-list auth design in `CLAUDE.md`.
+- **"Notify Unpaid" → SMS/email reminders** — `CLAUDE.md` lists automated
+  payment reminders as explicitly out of scope for this release; would also
+  need real SMS/email infrastructure (Twilio/SendGrid), not a schema change.

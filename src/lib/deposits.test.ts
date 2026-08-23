@@ -4,6 +4,7 @@ import { MemberNotFoundError } from "./members";
 import {
   createDeposit,
   DepositNotFoundError,
+  filterDeposits,
   listDeposits,
   listDepositsForMember,
   updateDeposit,
@@ -342,6 +343,40 @@ describe("deposits service", () => {
 
       expect(deposits.map((d: MonthlyDepositModel) => d.id)).toEqual([depositB.id, depositA.id]);
       expect(deposits.every((d: MonthlyDepositModel) => d.memberId === member.id)).toBe(true);
+    });
+  });
+
+  describe("filterDeposits", () => {
+    // Pure function over an already-fetched array (e.g. from `listDeposits`)
+    // — no DB access, so plain fixture objects suffice.
+    function deposit(id: string, month: number, year: number) {
+      return { id, memberId: "m1", month, year } as unknown as MonthlyDepositModel;
+    }
+
+    const fixtures = [
+      deposit("a", 1, 2025),
+      deposit("b", 3, 2026),
+      deposit("c", 3, 2025),
+    ];
+
+    it("returns everything when no filter is given", () => {
+      expect(filterDeposits(fixtures, {}).map((d) => d.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("filters by month only", () => {
+      expect(filterDeposits(fixtures, { month: 3 }).map((d) => d.id)).toEqual(["b", "c"]);
+    });
+
+    it("filters by year only", () => {
+      expect(filterDeposits(fixtures, { year: 2025 }).map((d) => d.id)).toEqual(["a", "c"]);
+    });
+
+    it("filters by both month and year", () => {
+      expect(filterDeposits(fixtures, { month: 3, year: 2025 }).map((d) => d.id)).toEqual(["c"]);
+    });
+
+    it("returns an empty array when nothing matches", () => {
+      expect(filterDeposits(fixtures, { month: 12 })).toEqual([]);
     });
   });
 });

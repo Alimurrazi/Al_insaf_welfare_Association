@@ -1,3 +1,4 @@
+import { Landmark } from "lucide-react";
 import { signIn } from "@/auth";
 import { GoogleIcon } from "@/components/google-icon";
 
@@ -6,7 +7,7 @@ import { GoogleIcon } from "@/components/google-icon";
 // recolored one, and this button is a third-party identity action, not an
 // in-app primary action.
 const googleButtonClasses =
-  "flex items-center gap-3 rounded-md border border-line bg-white px-6 py-3 text-base font-semibold text-ink transition-colors hover:bg-paper";
+  "flex w-full items-center justify-center gap-3 rounded-xl border border-line bg-white px-6 py-3.5 text-sm font-semibold text-ink transition-colors hover:bg-paper";
 
 export default async function SignInPage({
   searchParams,
@@ -16,31 +17,58 @@ export default async function SignInPage({
   const { error } = await searchParams;
 
   return (
-    <main className="flex min-h-screen flex-col items-center justify-center gap-6 px-4">
-      <h1 className="font-display text-xl font-bold text-ink">
-        Al-Insaf Welfare Association
-      </h1>
-      <p className="max-w-sm text-center text-sm text-ink-soft">
-        Member portal for tracking deposits and the land fund — only
-        registered members can sign in.
-      </p>
-      {error === "AccessDenied" && (
-        <p className="max-w-sm rounded-md border border-danger/30 bg-danger-soft px-4 py-3 text-center text-sm text-danger">
-          This Google account is not on the member allow-list. Ask an admin
-          to add your email before signing in.
+    // The two soft blurred circles echo the Figma sign-in frame's background
+    // blobs — recreated as plain CSS (blur + tinted tokens) instead of the
+    // Figma file's exported SVGs, so they scale with the viewport and
+    // inherit dark mode via the existing color tokens.
+    <main className="relative flex min-h-screen items-center justify-center overflow-hidden px-4">
+      <div className="pointer-events-none absolute -left-32 -top-32 size-[420px] rounded-full bg-accent-soft opacity-60 blur-3xl" />
+      <div className="pointer-events-none absolute -bottom-32 -right-32 size-[380px] rounded-full bg-gold-soft opacity-50 blur-3xl" />
+
+      <div className="relative flex w-full max-w-[460px] flex-col gap-8 rounded-3xl border border-line bg-surface p-10 shadow-lg">
+        <div className="flex flex-col items-center gap-4">
+          <span className="flex size-14 items-center justify-center rounded-2xl bg-accent text-white">
+            <Landmark className="size-7" />
+          </span>
+          <div className="flex flex-col items-center gap-1.5 text-center">
+            <h1 className="font-display text-lg font-bold text-ink">Al-Insaf Welfare Association</h1>
+            <p className="text-sm text-ink-soft">Transparent community land-fund portal</p>
+          </div>
+        </div>
+
+        <div className="h-px w-full bg-line" />
+
+        <div className="flex flex-col gap-2 rounded-xl border border-accent/30 bg-accent-soft p-4">
+          <p className="text-sm font-semibold text-accent">Group Land Purchase Fund</p>
+          <p className="text-xs leading-relaxed text-ink-soft">
+            A shared registry for the group&apos;s monthly deposits, annual top-ups, and expenses toward
+            purchasing land together.
+          </p>
+        </div>
+
+        {error === "AccessDenied" && (
+          <p className="rounded-xl border border-danger/30 bg-danger-soft px-4 py-3 text-center text-sm text-danger">
+            This Google account is not on the member allow-list. Ask an admin
+            to add your email before signing in.
+          </p>
+        )}
+
+        <form
+          action={async () => {
+            "use server";
+            await signIn("google");
+          }}
+        >
+          <button type="submit" className={googleButtonClasses}>
+            <GoogleIcon />
+            Sign in with Google
+          </button>
+        </form>
+
+        <p className="text-center text-xs text-ink-soft">
+          Need portal access? Ask an admin to add your email to the member list.
         </p>
-      )}
-      <form
-        action={async () => {
-          "use server";
-          await signIn("google");
-        }}
-      >
-        <button type="submit" className={googleButtonClasses}>
-          <GoogleIcon />
-          Sign in with Google
-        </button>
-      </form>
+      </div>
     </main>
   );
 }

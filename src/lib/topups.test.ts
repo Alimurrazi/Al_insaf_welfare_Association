@@ -3,6 +3,7 @@ import { prisma } from "./prisma";
 import { MemberNotFoundError } from "./members";
 import {
   createTopup,
+  filterTopups,
   listTopups,
   listTopupsForMember,
   TopupNotFoundError,
@@ -350,6 +351,28 @@ describe("topups service", () => {
 
       expect(topups.map((t: AnnualTopupModel) => t.id)).toEqual([topupB.id, topupA.id]);
       expect(topups.every((t: AnnualTopupModel) => t.memberId === member.id)).toBe(true);
+    });
+  });
+
+  describe("filterTopups", () => {
+    // Pure function over an already-fetched array (e.g. from `listTopups`)
+    // — no DB access, so plain fixture objects suffice.
+    function topup(id: string, otpNumber: number) {
+      return { id, memberId: "m1", otpNumber } as unknown as AnnualTopupModel;
+    }
+
+    const fixtures = [topup("a", 1), topup("b", 2), topup("c", 1)];
+
+    it("returns everything when no filter is given", () => {
+      expect(filterTopups(fixtures, {}).map((t) => t.id)).toEqual(["a", "b", "c"]);
+    });
+
+    it("filters by installment cycle (otpNumber)", () => {
+      expect(filterTopups(fixtures, { otpNumber: 1 }).map((t) => t.id)).toEqual(["a", "c"]);
+    });
+
+    it("returns an empty array when nothing matches", () => {
+      expect(filterTopups(fixtures, { otpNumber: 99 })).toEqual([]);
     });
   });
 });

@@ -75,6 +75,26 @@ export function sumExpenseAmounts<T extends { amount: unknown }>(expenses: T[]):
   return expenses.reduce((sum, expense) => sum + Number(expense.amount), 0);
 }
 
+// Each row's cumulative spend as of its date — independent of the order the
+// caller passes in (listExpenses/filterExpenses return most-recent-first),
+// since the running total is a property of chronological order, not display
+// order. Nothing is stored; this is render-time-only, so it doesn't conflict
+// with the "never a running balance" rule in CLAUDE.md.
+export function withRunningTotal<T extends { id: string; amount: unknown; date: Date }>(
+  expenses: T[],
+): (T & { runningTotal: number })[] {
+  const ascending = [...expenses].sort((a, b) => new Date(a.date).getTime() - new Date(b.date).getTime());
+
+  let running = 0;
+  const totalsById = new Map<string, number>();
+  for (const expense of ascending) {
+    running += Number(expense.amount);
+    totalsById.set(expense.id, running);
+  }
+
+  return expenses.map((expense) => ({ ...expense, runningTotal: totalsById.get(expense.id)! }));
+}
+
 export async function createExpense(actorId: string, input: ExpenseInput) {
   return prisma.$transaction(async (tx) => {
     const expense = await tx.expense.create({

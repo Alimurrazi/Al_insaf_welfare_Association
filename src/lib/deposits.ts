@@ -67,6 +67,21 @@ export async function listDeposits() {
   });
 }
 
+// Pure filter helper over an already-fetched list — the Deposits page
+// filters by month/year for display, which at this app's scale (15 members)
+// is simpler and cheaper done in memory than as a second DB round trip per
+// filter change, following the same pattern as `filterExpenses`.
+export function filterDeposits<T extends { month: number; year: number }>(
+  deposits: T[],
+  filter: { month?: number; year?: number },
+): T[] {
+  return deposits.filter((deposit) => {
+    if (filter.month && deposit.month !== filter.month) return false;
+    if (filter.year && deposit.year !== filter.year) return false;
+    return true;
+  });
+}
+
 export async function listDepositsForMember(memberId: string) {
   return prisma.monthlyDeposit.findMany({
     where: { memberId },

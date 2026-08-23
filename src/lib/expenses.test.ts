@@ -8,6 +8,7 @@ import {
   sumExpenseAmounts,
   updateExpense,
   validateExpenseInput,
+  withRunningTotal,
 } from "./expenses";
 import type { ExpenseModel } from "@/generated/prisma/models/Expense";
 
@@ -300,6 +301,47 @@ describe("expenses service", () => {
 
     it("returns 0 for an empty array", () => {
       expect(sumExpenseAmounts([])).toBe(0);
+    });
+  });
+
+  describe("withRunningTotal", () => {
+    // Pure function over an already-fetched array — no DB access, so plain
+    // fixture objects suffice.
+    function expense(id: string, dateStr: string, amount: number) {
+      return { id, date: new Date(dateStr), amount } as unknown as ExpenseModel;
+    }
+
+    it("computes each row's cumulative total as of its date, regardless of input order", () => {
+      // listExpenses returns most-recent-first; running totals must still
+      // reflect the chronological (oldest-first) accumulation.
+      const rows = [
+        expense("c", "2026-03-01", 300),
+        expense("b", "2026-02-01", 200),
+        expense("a", "2026-01-01", 100),
+      ];
+
+      const withTotals = withRunningTotal(rows);
+
+      expect(withTotals.map((r) => ({ id: r.id, runningTotal: r.runningTotal }))).toEqual([
+        { id: "c", runningTotal: 600 },
+        { id: "b", runningTotal: 300 },
+        { id: "a", runningTotal: 100 },
+      ]);
+    });
+
+    it("preserves the input array's order and length", () => {
+      const rows = [expense("b", "2026-02-01", 200), expense("a", "2026-01-01", 100)];
+      expect(withRunningTotal(rows).map((r) => r.id)).toEqual(["b", "a"]);
+    });
+
+    it("returns an empty array for an empty input", () => {
+      expect(withRunningTotal([])).toEqual([]);
+    });
+
+    it("accumulates same-date rows together rather than resetting", () => {
+      const rows = [expense("a", "2026-01-01", 100), expense("b", "2026-01-01", 50)];
+      const totals = withRunningTotal(rows).map((r) => r.runningTotal);
+      expect(new Set(totals)).toEqual(new Set([100, 150]));
     });
   });
 });

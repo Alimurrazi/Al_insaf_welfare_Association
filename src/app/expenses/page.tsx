@@ -1,9 +1,23 @@
 import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
+import { Search } from "lucide-react";
 import { auth } from "@/auth";
-import { createExpense, filterExpenses, listExpenses, sumExpenseAmounts, updateExpense } from "@/lib/expenses";
-import { inputClasses, primaryButtonClasses } from "@/components/styles";
-import { formatCurrency } from "@/lib/format";
+import {
+  createExpense,
+  filterExpenses,
+  listExpenses,
+  sumExpenseAmounts,
+  updateExpense,
+  withRunningTotal,
+} from "@/lib/expenses";
+import {
+  cardClasses,
+  EXPENSES_ROW_GRID_CLASSES,
+  inputClasses,
+  pageContainerClasses,
+  primaryButtonClasses,
+} from "@/components/styles";
+import { formatCurrency, matchesQuery } from "@/lib/format";
 import { AddExpenseForm } from "./add-expense-form";
 import { ExpenseRow } from "./expense-row";
 
@@ -47,12 +61,12 @@ async function editExpense(formData: FormData) {
 export default async function ExpensesPage({
   searchParams,
 }: {
-  searchParams: Promise<{ category?: string; year?: string }>;
+  searchParams: Promise<{ q?: string; category?: string; year?: string }>;
 }) {
   const session = await auth();
   const isAdmin = session!.user.role === "ADMIN";
 
-  const { category, year: yearParam } = await searchParams;
+  const { q, category, year: yearParam } = await searchParams;
   const year = yearParam ? Number(yearParam) : undefined;
 
   const allExpenses = await listExpenses();
@@ -61,65 +75,90 @@ export default async function ExpensesPage({
     new Set(allExpenses.map((expense) => new Date(expense.date).getFullYear())),
   ).sort((a, b) => b - a);
 
-  const filtered = filterExpenses(allExpenses, { category, year });
+  // Running totals are computed over every expense (chronological order)
+  // before filtering, then filtered for display — so a category/year filter
+  // narrows which rows are shown without changing what each row's running
+  // total means ("fund spend to date"). Nothing is stored; this is
+  // render-time-only (see UI-IMPROVEMENTS.md item 12).
+  const byPeriod = filterExpenses(withRunningTotal(allExpenses), { category, year });
+  const filtered = q
+    ? byPeriod.filter((expense) => matchesQuery(expense.note ?? expense.category, q))
+    : byPeriod;
   const total = sumExpenseAmounts(filtered);
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-8 px-6 py-12">
-      <div className="flex items-center justify-between gap-3">
-        <h1 className="font-display text-xl font-bold text-ink">Expenses</h1>
+    <main className={pageContainerClasses}>
+      <div className="flex flex-wrap items-center justify-between gap-4">
+        <div>
+          <h1 className="font-display text-xl font-bold text-ink">Group Expenses</h1>
+          <p className="text-sm text-ink-soft">Collective expenditures logged from the land fund.</p>
+        </div>
         {isAdmin && <AddExpenseForm addExpense={addExpense} />}
       </div>
 
-      <section className="flex flex-col gap-3">
-        <h2 className="font-mono text-xs uppercase tracking-wide text-ink-soft">Filter</h2>
-        <form action="/expenses" method="GET" className="flex flex-wrap items-end gap-3">
-          <label className="flex flex-col gap-1 text-sm text-ink">
-            Category
-            <select name="category" defaultValue={category ?? ""} className={inputClasses}>
-              <option value="">All categories</option>
-              {categories.map((c) => (
-                <option key={c} value={c}>
-                  {c}
-                </option>
-              ))}
-            </select>
-          </label>
-          <label className="flex flex-col gap-1 text-sm text-ink">
-            Year
-            <select name="year" defaultValue={yearParam ?? ""} className={inputClasses}>
-              <option value="">All years</option>
-              {years.map((y) => (
-                <option key={y} value={y}>
-                  {y}
-                </option>
-              ))}
-            </select>
-          </label>
-          <button type="submit" className={primaryButtonClasses}>
-            Apply
-          </button>
-        </form>
-      </section>
+      <form action="/expenses" method="GET" className={`flex flex-wrap items-end gap-4 ${cardClasses} p-4`}>
+        <label className="relative flex flex-col gap-2 text-sm text-ink">
+          <span className="sr-only">Search expense</span>
+          <Search className="pointer-events-none absolute bottom-2.5 left-3 size-3.5 text-ink-soft" />
+          <input
+            name="q"
+            type="text"
+            placeholder="Search expense…"
+            defaultValue={q ?? ""}
+            className={`${inputClasses} w-56 pl-9`}
+          />
+        </label>
+        <label className="flex flex-col gap-2 text-sm text-ink">
+          <span className="sr-only">Category</span>
+          <select name="category" defaultValue={category ?? ""} className={inputClasses}>
+            <option value="">All Categories</option>
+            {categories.map((c) => (
+              <option key={c} value={c}>
+                {c}
+              </option>
+            ))}
+          </select>
+        </label>
+        <label className="flex flex-col gap-2 text-sm text-ink">
+          <span className="sr-only">Year</span>
+          <select name="year" defaultValue={yearParam ?? ""} className={inputClasses}>
+            <option value="">All years</option>
+            {years.map((y) => (
+              <option key={y} value={y}>
+                {y}
+              </option>
+            ))}
+          </select>
+        </label>
+        <button type="submit" className={primaryButtonClasses}>
+          Apply
+        </button>
+        <p className="ml-auto font-mono text-sm font-semibold tabular-nums text-ink">
+          Total: {formatCurrency(total)}
+        </p>
+      </form>
 
-      <section className="flex flex-col gap-3">
-        <div className="flex items-center justify-between">
-          <p className="font-mono text-xs uppercase tracking-wide text-ink-soft">
-            {filtered.length} {filtered.length === 1 ? "expense" : "expenses"}
-          </p>
-          <p className="font-mono text-sm tabular-nums text-ink">
-            Total: {formatCurrency(total)}
-          </p>
+      <section className={`flex flex-col gap-0 overflow-hidden ${cardClasses} p-0`}>
+        <div className={`${EXPENSES_ROW_GRID_CLASSES} bg-paper px-6 py-3 text-xs font-semibold text-ink-soft`}>
+          <span>Date</span>
+          <span>Description</span>
+          <span>Category</span>
+          <span>Amount</span>
+          <span>Running Total</span>
+          <span className="text-right">Actions</span>
         </div>
-        <ul className="flex flex-col gap-2">
-          {filtered.map((expense) => (
+        {filtered.length === 0 ? (
+          <p className="px-6 py-8 text-center text-sm text-ink-soft">No expenses match these filters.</p>
+        ) : (
+          filtered.map((expense) => (
             <ExpenseRow
               key={expense.id}
               expense={{ ...expense, amount: Number(expense.amount) }}
+              runningTotal={expense.runningTotal}
               editExpense={isAdmin ? editExpense : undefined}
             />
-          ))}
-        </ul>
+          ))
+        )}
       </section>
     </main>
   );

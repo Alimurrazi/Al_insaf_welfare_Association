@@ -5,6 +5,7 @@ import {
   formatDateTime,
   formatMonthYear,
   formatRelativeTime,
+  matchesQuery,
   toDateInputValue,
 } from "./format";
 
@@ -113,5 +114,29 @@ describe("formatCurrency", () => {
 
   it("handles zero", () => {
     expect(formatCurrency(0)).toBe("Tk 0.00");
+  });
+});
+
+describe("matchesQuery", () => {
+  it("matches a case-insensitive substring", () => {
+    expect(matchesQuery("Fatima Al-Sayed", "fatima")).toBe(true);
+    expect(matchesQuery("Fatima Al-Sayed", "SAYED")).toBe(true);
+  });
+
+  it("matches a substring anywhere in the text, not just the start", () => {
+    expect(matchesQuery("Bilal El-Amin", "el-amin")).toBe(true);
+  });
+
+  it("returns false when the query isn't found", () => {
+    expect(matchesQuery("Fatima Al-Sayed", "omar")).toBe(false);
+  });
+
+  it("treats an empty or whitespace-only query as matching everything", () => {
+    expect(matchesQuery("Fatima Al-Sayed", "")).toBe(true);
+    expect(matchesQuery("Fatima Al-Sayed", "   ")).toBe(true);
+  });
+
+  it("ignores leading/trailing whitespace on the query", () => {
+    expect(matchesQuery("Fatima Al-Sayed", "  fatima  ")).toBe(true);
   });
 });

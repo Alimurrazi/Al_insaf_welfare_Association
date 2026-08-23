@@ -5,7 +5,7 @@ import {
   summarizeActivityEntry,
 } from "@/lib/activity";
 import { listMembers } from "@/lib/members";
-import { rowAmountClasses, rowMutedClasses } from "@/components/styles";
+import { cardClasses, pageContainerClasses, rowAmountClasses, rowMutedClasses } from "@/components/styles";
 import { formatRelativeTime } from "@/lib/format";
 
 // summarizeActivityEntry returns plain "key: value" (CREATE) or
@@ -43,28 +43,34 @@ export default async function ActivityPage() {
   const membersById = new Map(members.map((member) => [member.id, { name: member.name }]));
 
   return (
-    <main className="mx-auto flex max-w-5xl flex-col gap-6 px-6 py-12">
-      <h1 className="font-display text-xl font-bold text-ink">Activity Feed</h1>
+    <main className={pageContainerClasses}>
+      <div>
+        <h1 className="font-display text-xl font-bold text-ink">Activity Feed</h1>
+        <p className="text-sm text-ink-soft">Chronological record of every admin change to the ledger.</p>
+      </div>
 
-      <ul className="flex flex-col gap-2">
-        {entries.length === 0 && <li className="text-sm text-ink-soft">No activity recorded yet.</li>}
+      <div className="mx-auto flex w-full max-w-3xl flex-col gap-5">
+        {entries.length === 0 && <p className="text-center text-sm text-ink-soft">No activity recorded yet.</p>}
         {entries.map((entry) => {
           const sentence = describeActivityEntry(entry, { membersById, shareEntryMemberIds });
           const changes = summarizeActivityEntry(entry);
           return (
-            <li key={entry.id} className="rounded-md border border-line bg-surface p-4 text-sm text-ink">
-              <div className="flex flex-wrap items-baseline justify-between gap-x-3 gap-y-1">
-                <span>{sentence}</span>
-                <span className="font-mono text-xs tabular-nums text-ink-soft">
+            <article key={entry.id} className={`flex flex-col gap-4 ${cardClasses}`}>
+              <div className="flex items-start justify-between gap-3">
+                <div className="flex items-start gap-3">
+                  <span aria-hidden="true" className="mt-2 size-2 shrink-0 rounded-full bg-accent" />
+                  <p className="text-sm text-ink">{sentence}</p>
+                </div>
+                <span className="shrink-0 whitespace-nowrap text-xs text-ink-soft">
                   {formatRelativeTime(entry.createdAt, now)}
                 </span>
               </div>
               {changes.length > 0 && (
-                <details className="mt-2">
-                  <summary className="cursor-pointer font-mono text-xs uppercase tracking-wide text-ink-soft">
-                    Details
+                <details className="rounded-lg bg-accent-soft p-4">
+                  <summary className="cursor-pointer text-xs font-semibold uppercase tracking-wide text-accent">
+                    Raw change log
                   </summary>
-                  <ul className="mt-2 flex flex-col gap-1 font-mono text-xs">
+                  <ul className="mt-3 flex flex-col gap-1.5 font-mono text-xs">
                     {changes.map((line, i) => (
                       <li key={i}>
                         <ChangeLine line={line} />
@@ -73,10 +79,10 @@ export default async function ActivityPage() {
                   </ul>
                 </details>
               )}
-            </li>
+            </article>
           );
         })}
-      </ul>
+      </div>
     </main>
   );
 }

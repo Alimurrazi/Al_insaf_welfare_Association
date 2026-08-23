@@ -63,3 +63,12 @@ export function formatCurrency(amount: number): string {
     maximumFractionDigits: 2,
   })}`;
 }
+
+// Shared search-box matcher (member search on Deposits/Top-ups, etc.) — an
+// empty/whitespace-only query matches everything, so a cleared search box
+// shows the full list rather than nothing.
+export function matchesQuery(text: string, query: string): boolean {
+  const trimmed = query.trim();
+  if (trimmed.length === 0) return true;
+  return text.toLowerCase().includes(trimmed.toLowerCase());
+}

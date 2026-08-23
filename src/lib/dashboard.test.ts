@@ -1,6 +1,6 @@
 import { afterAll, describe, expect, it } from "vitest";
 import { prisma } from "./prisma";
-import { getDashboardSummary } from "./dashboard";
+import { getContributionSharePercent, getDashboardSummary } from "./dashboard";
 
 // Distinguishing prefix so cleanup can find (and only find) rows this file
 // created, following the existing pattern in `./deposits.test.ts`.
@@ -59,5 +59,28 @@ describe("getDashboardSummary", () => {
     expect(typeof after.totalSpent).toBe("number");
     expect(typeof after.balance).toBe("number");
     expect(after.balance).toBe(after.totalCollected - after.totalSpent);
+  });
+});
+
+describe("getContributionSharePercent", () => {
+  // Pure function over two already-computed numbers — no DB access needed.
+  it("returns the personal share as a percentage of the group total", () => {
+    expect(getContributionSharePercent(18000, 127500)).toBeCloseTo(14.1, 1);
+  });
+
+  it("rounds to one decimal place", () => {
+    expect(getContributionSharePercent(1, 3)).toBe(33.3);
+  });
+
+  it("returns 0 when the group total is 0 (avoids dividing by zero)", () => {
+    expect(getContributionSharePercent(0, 0)).toBe(0);
+  });
+
+  it("returns 0 when personal paid is 0", () => {
+    expect(getContributionSharePercent(0, 127500)).toBe(0);
+  });
+
+  it("caps at 100 even if personal paid exceeds the group total (shouldn't happen, but stay sane)", () => {
+    expect(getContributionSharePercent(200, 100)).toBe(100);
   });
 });
