@@ -113,25 +113,31 @@ export function TopNavLinks({ userId, role }: TopNavLinksProps) {
   const isLedgerGrid = pathname === "/ledger" || (pathname.startsWith("/ledger/") && !isOwnLedger);
 
   return (
-    // overflow-x-auto (not flex-wrap) so the row never breaks the header's
-    // fixed 72px height on phones — most members use this app on-phone (see
-    // UI-IMPROVEMENTS.md) — it scrolls horizontally there instead.
-    <nav className="flex h-full min-w-0 flex-1 items-center gap-1 overflow-x-auto">
-      <Link href="/" className={linkClass(pathname === "/")}>
-        Dashboard
-      </Link>
-      <Link href={ownLedgerHref} className={linkClass(isOwnLedger)}>
-        My Passbook
-      </Link>
-      <Link href="/ledger" className={linkClass(isLedgerGrid)}>
-        Logbook
-      </Link>
-      <Link href="/expenses" className={linkClass(pathname === "/expenses")}>
-        Expenses
-      </Link>
-      <Link href="/activity" className={linkClass(pathname === "/activity")}>
-        Activity feed
-      </Link>
+    <nav className="flex h-full min-w-0 flex-1 items-center gap-1">
+      {/* overflow-x-auto (not flex-wrap) so the row never breaks the header's
+          fixed 72px height on phones — most members use this app on-phone
+          (see UI-IMPROVEMENTS.md) — it scrolls horizontally there instead.
+          Scoped to just these links (not the whole <nav>) because
+          overflow-x-auto forces the element's overflow-y to auto too, which
+          would clip ManageMenu's absolutely-positioned dropdown instead of
+          letting it overlay the header. */}
+      <div className="flex h-full min-w-0 items-center gap-1 overflow-x-auto">
+        <Link href="/" className={linkClass(pathname === "/")}>
+          Dashboard
+        </Link>
+        <Link href={ownLedgerHref} className={linkClass(isOwnLedger)}>
+          My Passbook
+        </Link>
+        <Link href="/ledger" className={linkClass(isLedgerGrid)}>
+          Logbook
+        </Link>
+        <Link href="/expenses" className={linkClass(pathname === "/expenses")}>
+          Expenses
+        </Link>
+        <Link href="/activity" className={linkClass(pathname === "/activity")}>
+          Activity feed
+        </Link>
+      </div>
       {role === "ADMIN" && <ManageMenu pathname={pathname} />}
     </nav>
   );

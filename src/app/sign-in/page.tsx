@@ -1,5 +1,6 @@
 import { Landmark } from "lucide-react";
-import { signIn } from "@/auth";
+import { redirect } from "next/navigation";
+import { auth, signIn } from "@/auth";
 import { GoogleIcon } from "@/components/google-icon";
 
 // Deliberately not primaryButtonClasses (bg-accent) — Google's brand
@@ -12,9 +13,17 @@ const googleButtonClasses =
 export default async function SignInPage({
   searchParams,
 }: {
-  searchParams: Promise<{ error?: string }>;
+  searchParams: Promise<{ error?: string; callbackUrl?: string }>;
 }) {
-  const { error } = await searchParams;
+  const { error, callbackUrl } = await searchParams;
+
+  // The root layout renders TopNav on every page, including this one, and
+  // TopNav shows the logged-in header as soon as a session cookie exists —
+  // so without this check, a session that's already valid (e.g. the OAuth
+  // redirect bounced back here) leaves the topbar looking signed-in while
+  // this card still shows the "Sign in with Google" prompt underneath it.
+  const session = await auth();
+  if (session) redirect(callbackUrl?.startsWith("/") ? callbackUrl : "/");
 
   return (
     // The two soft blurred circles echo the Figma sign-in frame's background

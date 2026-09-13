@@ -10,6 +10,7 @@ import {
 import { Modal } from "@/components/modal";
 import { FormFeedback } from "@/components/form-feedback";
 import { useServerActionFeedback } from "@/components/use-server-action-feedback";
+import { toDateInputValue } from "@/lib/format";
 
 interface AddExpenseFormProps {
   addExpense: (formData: FormData) => Promise<void>;
@@ -34,7 +35,13 @@ export function AddExpenseForm({ addExpense }: AddExpenseFormProps) {
       <form onSubmit={handleSubmit} className={formClasses}>
         <label className={fieldLabelClasses}>
           Date
-          <input name="date" type="date" required className={inputClasses} />
+          <input
+            name="date"
+            type="date"
+            required
+            defaultValue={toDateInputValue(new Date())}
+            className={inputClasses}
+          />
         </label>
         <label className={fieldLabelClasses}>
           Category

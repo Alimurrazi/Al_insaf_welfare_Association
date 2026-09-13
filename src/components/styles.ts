@@ -74,5 +74,10 @@ export const EXPENSES_ROW_GRID_CLASSES =
 // No Status column (unlike the Figma table): the schema has no
 // active/inactive concept, so an always-"Active" badge would just be
 // decorative, not real data.
+// Access Level's column is `auto`-sized (not a fixed px track like the
+// others) so it hugs the RoleBadge's own inline-flex width instead of
+// reserving fixed whitespace around it — that space goes to the Action
+// column instead, which is otherwise the tightest fit (icon button flush
+// against the row's own right padding).
 export const MEMBERS_ROW_GRID_CLASSES =
-  "grid grid-cols-[minmax(160px,1.4fr)_minmax(180px,1.6fr)_110px_150px_80px] items-center gap-4";
+  "grid grid-cols-[minmax(160px,1.4fr)_minmax(180px,1.6fr)_auto_150px_90px] items-center gap-4";

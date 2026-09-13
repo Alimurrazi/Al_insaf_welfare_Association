@@ -11,6 +11,7 @@ import {
 import { Modal } from "@/components/modal";
 import { FormFeedback } from "@/components/form-feedback";
 import { useServerActionFeedback } from "@/components/use-server-action-feedback";
+import { toDateInputValue } from "@/lib/format";
 
 interface AddTopupFormProps {
   members: { id: string; name: string }[];
@@ -63,7 +64,13 @@ export function AddTopupForm({ members, addTopup }: AddTopupFormProps) {
         </label>
         <label className={fieldLabelClasses}>
           Paid date
-          <input name="paidDate" type="date" required className={inputClasses} />
+          <input
+            name="paidDate"
+            type="date"
+            required
+            defaultValue={toDateInputValue(new Date())}
+            className={inputClasses}
+          />
           <span className={fieldHintClasses}>When the payment was actually received</span>
         </label>
         <label className={fieldLabelClasses}>

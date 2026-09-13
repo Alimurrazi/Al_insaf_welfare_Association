@@ -1,6 +1,7 @@
 "use client";
 
 import {
+  fieldHintClasses,
   fieldLabelClasses,
   formActionsClasses,
   formClasses,
@@ -10,6 +11,7 @@ import {
 import { Modal } from "@/components/modal";
 import { FormFeedback } from "@/components/form-feedback";
 import { useServerActionFeedback } from "@/components/use-server-action-feedback";
+import { toDateInputValue } from "@/lib/format";
 
 interface AddMemberFormProps {
   addMember: (formData: FormData) => Promise<void>;
@@ -43,6 +45,20 @@ export function AddMemberForm({ addMember }: AddMemberFormProps) {
             <option value="MEMBER">MEMBER</option>
             <option value="ADMIN">ADMIN</option>
           </select>
+        </label>
+        <label className={fieldLabelClasses}>
+          Initial shares
+          <input name="shareCount" type="number" min={1} step={1} className={inputClasses} />
+          <span className={fieldHintClasses}>Optional — leave blank to assign shares later</span>
+        </label>
+        <label className={fieldLabelClasses}>
+          Effective from
+          <input
+            name="effectiveFrom"
+            type="date"
+            defaultValue={toDateInputValue(new Date())}
+            className={inputClasses}
+          />
         </label>
         <div className={`flex flex-col gap-3 ${formActionsClasses}`}>
           <FormFeedback feedback={feedback} />

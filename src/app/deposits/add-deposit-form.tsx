@@ -13,6 +13,7 @@ import { Modal } from "@/components/modal";
 import { FormFeedback } from "@/components/form-feedback";
 import { useServerActionFeedback } from "@/components/use-server-action-feedback";
 import { MONTH_NAMES } from "@/lib/month-names";
+import { toDateInputValue } from "@/lib/format";
 
 interface AddDepositFormProps {
   members: { id: string; name: string }[];
@@ -24,12 +25,11 @@ interface AddDepositFormProps {
 }
 
 // Month/year are deliberately separate from paid date (a payment can be
-// early/late, or one paid-date can cover several months — see the "Paid
-// date" hint below), so they stay independently editable. But the common
-// case is "paid on time", so picking a paid date fills in a matching
-// month/year as a starting guess — entering a second month for the same
-// payment (the lump-sum/advance-payment case) is then just: submit, then
-// change only the Month dropdown before submitting again.
+// early/late, made in a different year than it counts for, or one paid-date
+// can cover several months — see the "Paid date" hint below), so they stay
+// fully independent: changing the paid date must never overwrite an
+// already-chosen month/year, e.g. logging a January deposit for last year
+// while paying in July of this year.
 //
 // Every field is controlled and submission is handled manually (rather
 // than passing `addDeposit` straight to the form's `action` prop) so nothing
@@ -39,22 +39,17 @@ interface AddDepositFormProps {
 // and would undo the "keep everything, just change Month" workflow this
 // form exists for. The modal itself stays open after a successful save for
 // the same reason — closing it would kill the "add another month" flow.
+const today = new Date();
+const todayInputValue = toDateInputValue(today);
+
 export function AddDepositForm({ members, addDeposit, defaultMemberId }: AddDepositFormProps) {
   const [memberId, setMemberId] = useState(defaultMemberId ?? "");
-  const [month, setMonth] = useState("");
-  const [year, setYear] = useState("");
+  const [month, setMonth] = useState(String(today.getUTCMonth() + 1));
+  const [year, setYear] = useState(String(today.getUTCFullYear()));
   const [amount, setAmount] = useState("");
-  const [paidDate, setPaidDate] = useState("");
+  const [paidDate, setPaidDate] = useState(todayInputValue);
   const [note, setNote] = useState("");
   const { feedback, pending, run } = useServerActionFeedback();
-
-  function handlePaidDateChange(value: string) {
-    setPaidDate(value);
-    if (!value) return;
-    const [y, m] = value.split("-");
-    setYear(y);
-    setMonth(String(Number(m)));
-  }
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -140,12 +135,12 @@ export function AddDepositForm({ members, addDeposit, defaultMemberId }: AddDepo
             type="date"
             required
             value={paidDate}
-            onChange={(e) => handlePaidDateChange(e.target.value)}
+            onChange={(e) => setPaidDate(e.target.value)}
             className={inputClasses}
           />
           <span className={fieldHintClasses}>
-            The actual date payment was received — fills in the period above to match, but it stays
-            changeable (e.g. one payment covering two periods)
+            The actual date payment was received — independent of the month/year above (e.g. a late or
+            advance payment, or one payment covering multiple periods)
           </span>
         </label>
         <label className={fieldLabelClasses}>

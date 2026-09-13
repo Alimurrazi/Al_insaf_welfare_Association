@@ -64,6 +64,53 @@ export async function createMember(actorId: string, input: MemberInput) {
   });
 }
 
+export interface InitialMemberShare {
+  shareCount: number;
+  effectiveFrom: Date | string;
+}
+
+// Used by the Add Member form's optional "Initial shares" fields. One
+// transaction (not createMember + a separate addMemberShare call) so the
+// member and its opening share row commit atomically — still two writes,
+// never a field on Member itself, since a share change must always be its
+// own dated member_shares row (see CLAUDE.md).
+export async function createMemberWithInitialShare(
+  actorId: string,
+  input: MemberInput,
+  initialShare?: InitialMemberShare | null,
+) {
+  return prisma.$transaction(async (tx) => {
+    const member = await tx.member.create({ data: input });
+    await tx.activityLog.create({
+      data: {
+        actorId,
+        action: "CREATE",
+        entityType: "Member",
+        entityId: member.id,
+        newValue: { name: member.name, email: member.email, role: member.role },
+      },
+    });
+
+    if (initialShare && initialShare.shareCount > 0) {
+      const effectiveFrom = new Date(initialShare.effectiveFrom);
+      const share = await tx.memberShare.create({
+        data: { memberId: member.id, shareCount: initialShare.shareCount, effectiveFrom },
+      });
+      await tx.activityLog.create({
+        data: {
+          actorId,
+          action: "CREATE",
+          entityType: "MemberShare",
+          entityId: share.id,
+          newValue: { shareCount: share.shareCount, effectiveFrom: share.effectiveFrom },
+        },
+      });
+    }
+
+    return member;
+  });
+}
+
 export async function updateMember(
   actorId: string,
   id: string,

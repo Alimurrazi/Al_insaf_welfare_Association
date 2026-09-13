@@ -2,7 +2,7 @@ import { notFound } from "next/navigation";
 import { revalidatePath } from "next/cache";
 import { History } from "lucide-react";
 import { auth } from "@/auth";
-import { createMember, listMembers, updateMember } from "@/lib/members";
+import { createMemberWithInitialShare, listMembers, updateMember } from "@/lib/members";
 import {
   addMemberShare,
   getRecentShareChanges,
@@ -28,11 +28,23 @@ async function addMember(formData: FormData) {
   "use server";
   const session = await requireAdminSession();
 
-  await createMember(session.user.id, {
-    name: String(formData.get("name") ?? ""),
-    email: String(formData.get("email") ?? ""),
-    role: formData.get("role") as Role,
-  });
+  // Initial shares are optional on this form (a member can be added and
+  // assigned shares later from the row's Manage panel) but when given, they
+  // still go through a fresh member_shares row (created atomically with the
+  // member by createMemberWithInitialShare), same as any later change —
+  // rather than a field on the member itself.
+  const shareCount = Number(formData.get("shareCount"));
+  const effectiveFrom = String(formData.get("effectiveFrom") ?? "");
+
+  await createMemberWithInitialShare(
+    session.user.id,
+    {
+      name: String(formData.get("name") ?? ""),
+      email: String(formData.get("email") ?? ""),
+      role: formData.get("role") as Role,
+    },
+    shareCount > 0 && effectiveFrom ? { shareCount, effectiveFrom } : null,
+  );
 
   revalidatePath("/members");
 }
@@ -91,7 +103,7 @@ export default async function MembersPage() {
 
       <div className="flex flex-col gap-6 lg:flex-row">
         <section className={`flex flex-1 flex-col gap-0 overflow-hidden ${cardClasses} p-0`}>
-          <div className={`${MEMBERS_ROW_GRID_CLASSES} bg-paper px-6 py-3 text-xs font-semibold text-ink-soft`}>
+          <div className={`${MEMBERS_ROW_GRID_CLASSES} bg-paper pl-6 pr-8 py-3 text-xs font-semibold text-ink-soft`}>
             <span>Member Name</span>
             <span>Email Address</span>
             <span>Access Level</span>

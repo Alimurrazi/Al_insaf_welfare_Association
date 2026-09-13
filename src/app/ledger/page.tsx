@@ -1,17 +1,11 @@
 import Link from "next/link";
-import { Check, ChevronDown } from "lucide-react";
+import { Check } from "lucide-react";
 import { auth } from "@/auth";
 import { getLedgerGrid, type LedgerEntry } from "@/lib/ledger";
 import { getShareCountAsOf, listSharesForMembers } from "@/lib/member-shares";
-import {
-  cardClasses,
-  inputClasses,
-  pageContainerClasses,
-  primaryButtonClasses,
-  rowAmountClasses,
-  rowMutedClasses,
-} from "@/components/styles";
+import { cardClasses, pageContainerClasses, rowAmountClasses, rowMutedClasses } from "@/components/styles";
 import { formatCurrency, formatDate } from "@/lib/format";
+import { YearSelect } from "./year-select";
 
 const MONTH_LABELS = [
   "Jan", "Feb", "Mar", "Apr", "May", "Jun",
@@ -84,21 +78,7 @@ export default async function LedgerPage({
           <h1 className="font-display text-xl font-bold text-ink">Registry Logbook</h1>
           <p className="text-sm text-ink-soft">Read-only matrix of every member&apos;s monthly deposit completion.</p>
         </div>
-        <form action="/ledger" method="GET" className="flex items-center gap-2">
-          <div className="relative">
-            <select name="year" defaultValue={year} className={`${inputClasses} appearance-none py-2 pr-9`}>
-              {yearOptions.map((y) => (
-                <option key={y} value={y}>
-                  Year: {y}
-                </option>
-              ))}
-            </select>
-            <ChevronDown className="pointer-events-none absolute right-3 top-1/2 size-3.5 -translate-y-1/2 text-ink-soft" />
-          </div>
-          <button type="submit" className={primaryButtonClasses}>
-            View
-          </button>
-        </form>
+        <YearSelect year={year} yearOptions={yearOptions} />
       </div>
 
       <div className={`flex flex-wrap items-center gap-6 ${cardClasses} py-4`}>
