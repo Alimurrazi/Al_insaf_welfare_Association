@@ -5,6 +5,7 @@
   "scripts": {
     "predev": "docker compose up -d postgres",
     "dev": "next dev",
+    "postinstall": "prisma generate",
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
