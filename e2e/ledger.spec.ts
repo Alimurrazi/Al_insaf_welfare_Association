@@ -40,6 +40,14 @@ test.describe("/ledger — shared, read-only for both roles", () => {
        VALUES ($1, $2, 6, 2026, 3000, '2026-06-05', $2, now())`,
       [crypto.randomUUID(), targetId],
     );
+    // A second deposit in a different year, specifically so the year-filter
+    // test below can prove switching years actually changes what's shown —
+    // not just that a direct ?year=2025 URL happens to render correctly.
+    await client.query(
+      `INSERT INTO monthly_deposits (id, "memberId", month, year, amount, "paidDate", "createdById", "createdAt")
+       VALUES ($1, $2, 1, 2025, 1500, '2025-01-10', $2, now())`,
+      [crypto.randomUUID(), targetId],
+    );
   });
 
   test.afterAll(async () => {
@@ -76,6 +84,28 @@ test.describe("/ledger — shared, read-only for both roles", () => {
     await expect(page.getByRole("heading", { name: /logbook/i })).toBeVisible();
     const row = page.locator("tr", { hasText: TARGET_NAME });
     await expect(row).toContainText("3,000.00");
+  });
+
+  // Regression test: the year filter used to be a plain <form method="GET">
+  // that, in testing, never actually navigated (the URL never changed no
+  // matter what year was picked). It's now a client-side <select> that
+  // pushes the new URL directly via the router — this drives that control
+  // itself, rather than jumping straight to a ?year= URL like the tests
+  // above do, so it actually exercises the fix.
+  test("switching the year dropdown navigates to that year's grid", async ({ page, context }) => {
+    const cookie = await createSessionCookie(ADMIN_EMAIL);
+    await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
+
+    await page.goto("/ledger?year=2026");
+    const row2026 = page.locator("tr", { hasText: TARGET_NAME });
+    await expect(row2026).toContainText("3,000.00");
+
+    await page.locator("select").selectOption("2025");
+
+    await expect(page).toHaveURL(/\/ledger\?year=2025$/);
+    const row2025 = page.locator("tr", { hasText: TARGET_NAME });
+    await expect(row2025).toContainText("1,500.00");
+    await expect(row2025).not.toContainText("3,000.00");
   });
 
   test("an unauthenticated visitor is redirected to sign-in", async ({ page }) => {

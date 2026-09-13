@@ -50,24 +50,64 @@ test.describe("member shares (manage members screen)", () => {
     await client.end();
   });
 
-  test("an admin can view share history and record a new share-count row", async ({ page, context }) => {
+  // Scoped by the row's own wrapper classes (`border-t border-line`, shared
+  // by every member row — see member-row.tsx) filtered down to the one
+  // containing this member's email. Unlike the name/role/shares cells, this
+  // wrapper also contains the Manage panel once it's open, so one locator
+  // covers both the collapsed row and its expanded form.
+  function memberRow(page: import("@playwright/test").Page) {
+    return page.locator("div.border-t.border-line", { hasText: TARGET_EMAIL });
+  }
+
+  test("an admin can view current shares and record a new share-count row from the Manage panel", async ({
+    page,
+    context,
+  }) => {
     const cookie = await createSessionCookie(ADMIN_EMAIL);
     await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
 
     await page.goto("/members");
 
-    const row = page.locator("li", { hasText: TARGET_EMAIL }).first();
-    await expect(row.getByText(/^4 shares$/)).toBeVisible();
+    // Just the count, not the "(N.N%)" share-of-total suffix — that
+    // percentage is computed across every member in the DB (see
+    // getContributionSharePercent/getShareCountAsOf), so it isn't
+    // deterministic when this suite runs against a real dev database that
+    // may already have other members holding shares.
+    const row = memberRow(page);
+    await expect(row.getByText(/^4 Shares/)).toBeVisible();
 
-    await row.getByRole("button", { name: "Shares" }).click();
+    // The two previously-separate "History" and "Edit" icons were merged
+    // into one "Manage" button opening a single panel (this session's
+    // change) — Personal Info and Shares now live in one form.
+    await row.getByRole("button", { name: `Manage ${TARGET_NAME}` }).click();
     await expect(row.getByText(/Registered with 4 shares, effective 1 Jan 2025/)).toBeVisible();
 
     await row.getByLabel("Share count").fill("7");
     await row.getByLabel("Effective from").fill("2026-06-01");
-    await row.getByRole("button", { name: "Record change" }).click();
+    await row.getByRole("button", { name: "Save" }).click();
 
-    const updatedRow = page.locator("li", { hasText: TARGET_EMAIL }).first();
-    await expect(updatedRow.getByText(/^7 shares$/)).toBeVisible();
-    await expect(updatedRow.getByText(/Shares changed from 4 to 7, effective 1 Jun 2026/)).toBeVisible();
+    await expect(row.getByText(/^7 Shares/)).toBeVisible();
+    await expect(row.getByText(/Shares changed from 4 to 7, effective 1 Jun 2026/)).toBeVisible();
+  });
+
+  test("saving the panel with Share count left blank edits info without adding a share row", async ({
+    page,
+    context,
+  }) => {
+    const cookie = await createSessionCookie(ADMIN_EMAIL);
+    await context.addCookies([{ ...cookie, url: "http://localhost:3000" }]);
+
+    await page.goto("/members");
+
+    const row = memberRow(page);
+    await row.getByRole("button", { name: `Manage ${TARGET_NAME}` }).click();
+    await row.getByLabel("Name").fill(`${TARGET_NAME} Jr.`);
+    // Share count intentionally left blank.
+    await row.getByRole("button", { name: "Save" }).click();
+
+    const renamedRow = page.locator("div.border-t.border-line", { hasText: TARGET_EMAIL });
+    await expect(renamedRow.getByText(`${TARGET_NAME} Jr.`)).toBeVisible();
+    // Still 7 (from the previous test) — no new share row was recorded.
+    await expect(renamedRow.getByText(/^7 Shares/)).toBeVisible();
   });
 });
