@@ -59,6 +59,9 @@ Approved design system (see the "Insaf Ledger" artifact for the full reference/r
 - Inputs: `border-line bg-surface`, `focus-visible:outline-accent`.
 - Badges: pill-shaped, `font-mono text-xs`, `bg-gold-soft text-gold` (ADMIN) or `bg-accent-soft text-accent` (MEMBER) — see `src/components/role-badge.tsx`.
 - Radius: Tailwind's `rounded-md` (0.375rem) everywhere — no custom radius token.
+- Toasts: solid `bg-accent text-white` (success) or `bg-danger text-white` (error), fixed bottom-right — see `src/components/toast.tsx` (`ToastProvider`/`useToast`, mounted once in `src/app/layout.tsx`). Every Add-*/edit form fires one via the shared `useServerActionFeedback` hook (`src/components/use-server-action-feedback.ts`) on both success and error; a modal or edit panel that closes on success (see below) relies on the toast as the only save confirmation, since its inline banner unmounts with it.
+- Submit buttons: disable (`disabled:opacity-60`) and swap their label to a present-participle ("Saving…") while `useServerActionFeedback`'s `pending` is true, so a slow save can't be double-submitted or look inert.
+- Default a form to closing/collapsing on a successful save (a modal closes, an inline edit row collapses) — the toast is the save confirmation, not a lingering open form. Exception: a form built around an explicit "do this again" workflow (`AddDepositForm`'s add-another-month flow; `MemberRow`'s manage panel, which also displays share-change history right after saving) stays open on success instead.
 
 ## Testing — test-first, always
 

@@ -92,8 +92,10 @@ src/
                          members/, ledger/ (Logbook + My Passbook), activity/,
                          sign-in/, error.tsx (App Router error boundary)
   auth.ts, auth.config.ts, middleware.ts   NextAuth setup — see AUTH.md
-  components/           Shared UI: top nav, modal, role badge, shared
-                         Tailwind class constants (styles.ts)
+  components/           Shared UI: top nav, modal, role badge, toast
+                         (ToastProvider/useToast), the useServerActionFeedback
+                         hook every Add-*/edit form uses for pending state +
+                         toasts, shared Tailwind class constants (styles.ts)
   lib/                  Domain logic — one module per entity (deposits.ts,
                          topups.ts, expenses.ts, members.ts, member-shares.ts,
                          activity.ts, ledger.ts, member-ledger.ts,

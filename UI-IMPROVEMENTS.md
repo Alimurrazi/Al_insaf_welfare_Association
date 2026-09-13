@@ -72,11 +72,12 @@ button, general text pass. Cautions and additions:
   `src/app/deposits/add-deposit-form.tsx`). If the form moves into a modal:
   keep the modal open after save, show a visible "Saved ✓" confirmation, and
   offer an explicit "Add another" affordance.
-- **Add success/error feedback — currently there is none.** A failed server
-  action drops the user on Next's error screen. Add a toast/inline message for
-  both success ("Deposit saved for Karim — Aug 2026") and failure ("Couldn't
-  save — try again"), using the existing `danger`/`danger-soft` tokens for
-  errors.
+- **Add success/error feedback.** ~~Currently there is none~~ Done in a later
+  pass: every Add-*/edit form now fires a toast via the shared
+  `useServerActionFeedback` hook for both success ("Deposit saved for Karim —
+  Aug 2026") and failure ("Couldn't save — please try again."), and disables
+  its submit button while pending. See the "Toasts"/"Submit buttons" entries
+  in `CLAUDE.md`'s UI conventions.
 - **Edit forms can stay inline.** The expand-in-place pattern in
   `deposit-row.tsx` / `member-row.tsx` etc. is fine; modals earn their keep on
   the Add forms.
