@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   fieldLabelClasses,
   formActionsClasses,
@@ -16,10 +17,12 @@ interface AddExpenseFormProps {
   addExpense: (formData: FormData) => Promise<void>;
 }
 
-// Unlike AddDepositForm, this form clears itself after a successful save —
-// expenses are one-off entries with no "repeat with one field changed"
-// workflow to preserve, so a blank form ready for the next entry is friendlier.
+// Unlike AddDepositForm, this form closes its modal after a successful save
+// (confirmed via a toast) — expenses are one-off entries with no "repeat
+// with one field changed" workflow to preserve, so returning to a closed,
+// blank-next-time modal is friendlier than leaving it open.
 export function AddExpenseForm({ addExpense }: AddExpenseFormProps) {
+  const [open, setOpen] = useState(false);
   const { feedback, pending, run } = useServerActionFeedback();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -27,11 +30,14 @@ export function AddExpenseForm({ addExpense }: AddExpenseFormProps) {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const category = String(formData.get("category") ?? "");
-    run(() => addExpense(formData), `Expense saved — ${category}`, () => form.reset());
+    run(() => addExpense(formData), `Expense saved — ${category}`, () => {
+      form.reset();
+      setOpen(false);
+    });
   }
 
   return (
-    <Modal triggerLabel="+ Add expense" title="Add an expense">
+    <Modal triggerLabel="+ Add expense" title="Add an expense" open={open} onOpenChange={setOpen}>
       <form onSubmit={handleSubmit} className={formClasses}>
         <label className={fieldLabelClasses}>
           Date

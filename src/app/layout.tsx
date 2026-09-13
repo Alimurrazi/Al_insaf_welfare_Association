@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { fontBody, fontDisplay, fontMono } from "@/fonts";
 import { TopNav } from "@/components/top-nav";
+import { ToastProvider } from "@/components/toast";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -15,8 +16,10 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${fontDisplay.variable} ${fontBody.variable} ${fontMono.variable} h-full antialiased`}
     >
       <body className="flex min-h-full flex-col">
-        <TopNav />
-        {children}
+        <ToastProvider>
+          <TopNav />
+          {children}
+        </ToastProvider>
       </body>
     </html>
   );

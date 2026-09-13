@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   fieldHintClasses,
   fieldLabelClasses,
@@ -18,9 +19,11 @@ interface AddTopupFormProps {
   addTopup: (formData: FormData) => Promise<void>;
 }
 
-// Clears itself after a successful save — unlike deposits, top-ups have no
-// "repeat with one field changed" workflow to preserve values for.
+// Closes its modal after a successful save (confirmed via a toast) — unlike
+// deposits, top-ups have no "repeat with one field changed" workflow to
+// preserve values for.
 export function AddTopupForm({ members, addTopup }: AddTopupFormProps) {
+  const [open, setOpen] = useState(false);
   const { feedback, pending, run } = useServerActionFeedback();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -29,11 +32,14 @@ export function AddTopupForm({ members, addTopup }: AddTopupFormProps) {
     const formData = new FormData(form);
     const memberId = String(formData.get("memberId") ?? "");
     const memberName = members.find((member) => member.id === memberId)?.name ?? "the member";
-    run(() => addTopup(formData), `Top-up saved for ${memberName}`, () => form.reset());
+    run(() => addTopup(formData), `Top-up saved for ${memberName}`, () => {
+      form.reset();
+      setOpen(false);
+    });
   }
 
   return (
-    <Modal triggerLabel="+ Add top-up" title="Add a top-up">
+    <Modal triggerLabel="+ Add top-up" title="Add a top-up" open={open} onOpenChange={setOpen}>
       <form onSubmit={handleSubmit} className={formClasses}>
         <label className={fieldLabelClasses}>
           Member

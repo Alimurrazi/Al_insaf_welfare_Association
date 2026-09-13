@@ -12,6 +12,8 @@ import {
   secondaryButtonClasses,
   TOPUPS_ROW_GRID_CLASSES,
 } from "@/components/styles";
+import { FormFeedback } from "@/components/form-feedback";
+import { useServerActionFeedback } from "@/components/use-server-action-feedback";
 import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
 
 interface TopupRowProps {
@@ -33,6 +35,13 @@ interface TopupRowProps {
 // one, following the same pattern as DepositRow/MemberRow.
 export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProps) {
   const [editing, setEditing] = useState(false);
+  const { feedback, pending, run } = useServerActionFeedback();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    run(() => editTopup(formData), `Top-up updated for ${memberName}`, () => setEditing(false));
+  }
 
   if (!editing) {
     return (
@@ -42,6 +51,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
         <span className="text-ink-soft">Installment #{topup.otpNumber}</span>
         <span className="font-mono font-semibold tabular-nums text-accent">{formatCurrency(topup.amount)}</span>
         <span className="text-ink-soft">{formatDate(topup.paidDate)}</span>
+        <span className="truncate italic text-ink-soft">{topup.note}</span>
         <span className="flex justify-end">
           <button
             type="button"
@@ -58,13 +68,7 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
 
   return (
     <div className="border-t border-line p-4">
-      <form
-        action={async (formData) => {
-          await editTopup(formData);
-          setEditing(false);
-        }}
-        className={formClasses}
-      >
+      <form onSubmit={handleSubmit} className={formClasses}>
         <input type="hidden" name="id" value={topup.id} />
         <label className={fieldLabelClasses}>
           Member
@@ -129,13 +133,25 @@ export function TopupRow({ topup, memberName, members, editTopup }: TopupRowProp
           Note
           <input name="note" type="text" defaultValue={topup.note ?? ""} className={inputClasses} />
         </label>
-        <div className={`flex gap-3 ${formActionsClasses}`}>
-          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
-            Save
-          </button>
-          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
-            Cancel
-          </button>
+        <div className={`flex flex-col gap-3 ${formActionsClasses}`}>
+          <FormFeedback feedback={feedback} />
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={pending}
+              className={`${primaryButtonClasses} flex-1 disabled:opacity-60`}
+            >
+              {pending ? "Saving…" : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              disabled={pending}
+              className={`${secondaryButtonClasses} flex-1 disabled:opacity-60`}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </form>
     </div>

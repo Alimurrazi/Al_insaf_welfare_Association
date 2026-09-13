@@ -1,5 +1,6 @@
 "use client";
 
+import { useState } from "react";
 import {
   fieldHintClasses,
   fieldLabelClasses,
@@ -18,6 +19,7 @@ interface AddMemberFormProps {
 }
 
 export function AddMemberForm({ addMember }: AddMemberFormProps) {
+  const [open, setOpen] = useState(false);
   const { feedback, pending, run } = useServerActionFeedback();
 
   function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
@@ -25,11 +27,14 @@ export function AddMemberForm({ addMember }: AddMemberFormProps) {
     const form = event.currentTarget;
     const formData = new FormData(form);
     const name = String(formData.get("name") ?? "");
-    run(() => addMember(formData), `Member added — ${name}`, () => form.reset());
+    run(() => addMember(formData), `Member added — ${name}`, () => {
+      form.reset();
+      setOpen(false);
+    });
   }
 
   return (
-    <Modal triggerLabel="+ Add member" title="Add a member">
+    <Modal triggerLabel="+ Add member" title="Add a member" open={open} onOpenChange={setOpen}>
       <form onSubmit={handleSubmit} className={formClasses}>
         <label className={fieldLabelClasses}>
           Name

@@ -12,6 +12,13 @@ interface ModalProps {
   // this modal's form via a query param, rather than requiring an extra
   // click on the trigger button.
   defaultOpen?: boolean;
+  // Passing `open`/`onOpenChange` switches this from self-managed to
+  // controlled — used by forms that close their own modal after a
+  // successful save (e.g. AddExpenseForm) rather than requiring a manual
+  // Close click. Omit both to keep the original self-managed behavior
+  // (e.g. AddDepositForm, which deliberately stays open after saving).
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }
 
 // Wraps the native <dialog> element rather than a hand-rolled overlay div —
@@ -20,9 +27,23 @@ interface ModalProps {
 // behavior: this component only opens and closes the dialog, so a form that
 // wants to stay open after saving (e.g. AddDepositForm's "add another month"
 // workflow) can, without fighting the modal for control.
-export function Modal({ triggerLabel, title, children, defaultOpen = false }: ModalProps) {
+export function Modal({
+  triggerLabel,
+  title,
+  children,
+  defaultOpen = false,
+  open: openProp,
+  onOpenChange,
+}: ModalProps) {
   const dialogRef = useRef<HTMLDialogElement>(null);
-  const [open, setOpen] = useState(defaultOpen);
+  const [internalOpen, setInternalOpen] = useState(defaultOpen);
+  const isControlled = openProp !== undefined;
+  const open = isControlled ? openProp : internalOpen;
+
+  function setOpen(next: boolean) {
+    if (!isControlled) setInternalOpen(next);
+    onOpenChange?.(next);
+  }
 
   useEffect(() => {
     const dialog = dialogRef.current;

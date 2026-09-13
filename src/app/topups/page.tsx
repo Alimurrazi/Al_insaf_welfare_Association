@@ -123,6 +123,7 @@ export default async function TopupsPage({
           <span>Installment Cycle</span>
           <span>Amount Paid</span>
           <span>Paid Date</span>
+          <span>Note</span>
           <span className="text-right">Actions</span>
         </div>
         {topups.length === 0 ? (

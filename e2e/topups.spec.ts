@@ -98,12 +98,16 @@ test.describe("/topups access boundary and flow", () => {
     await addForm.getByLabel("Paid date").fill("2026-06-05");
     await addForm.getByLabel("Note").fill("First OTP");
     await addForm.getByRole("button", { name: "Add top-up" }).click();
-    await expect(addForm.getByText(/top-up saved/i)).toBeVisible();
-    await page.getByRole("button", { name: "Close" }).click();
+    // The modal auto-closes on a successful save — the toast is the only
+    // save confirmation now, so there's no Close button left to click.
+    await expect(page.getByRole("status").filter({ hasText: /top-up saved/i })).toBeVisible();
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
 
     // Scoped by TARGET_NAME only — once the row flips into its edit form,
-    // year/OTP number become <input> values rather than text content.
-    const row = page.locator("li", { hasText: TARGET_NAME });
+    // year/OTP number become <input> values rather than text content. Uses
+    // the row's own wrapper classes (see DepositRow/MemberRow), not <li> —
+    // TopupRow doesn't render a list item.
+    const row = page.locator("div.border-t.border-line", { hasText: TARGET_NAME });
     await expect(row).toContainText("5,000.00");
     await expect(row).toContainText("First OTP");
 

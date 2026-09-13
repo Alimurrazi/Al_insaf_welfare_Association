@@ -11,6 +11,8 @@ import {
   primaryButtonClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { FormFeedback } from "@/components/form-feedback";
+import { useServerActionFeedback } from "@/components/use-server-action-feedback";
 import { formatCurrency, formatDate, toDateInputValue } from "@/lib/format";
 
 interface ExpenseRowProps {
@@ -34,6 +36,14 @@ interface ExpenseRowProps {
 // one, following the same pattern as DepositRow/TopupRow/MemberRow.
 export function ExpenseRow({ expense, editExpense, runningTotal }: ExpenseRowProps) {
   const [editing, setEditing] = useState(false);
+  const { feedback, pending, run } = useServerActionFeedback();
+
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (!editExpense) return;
+    const formData = new FormData(event.currentTarget);
+    run(() => editExpense(formData), `Expense updated — ${expense.category}`, () => setEditing(false));
+  }
 
   if (!editing || !editExpense) {
     return (
@@ -63,13 +73,7 @@ export function ExpenseRow({ expense, editExpense, runningTotal }: ExpenseRowPro
 
   return (
     <div className="border-t border-line p-4">
-      <form
-        action={async (formData) => {
-          await editExpense(formData);
-          setEditing(false);
-        }}
-        className={formClasses}
-      >
+      <form onSubmit={handleSubmit} className={formClasses}>
         <input type="hidden" name="id" value={expense.id} />
         <label className={fieldLabelClasses}>
           Date
@@ -101,13 +105,25 @@ export function ExpenseRow({ expense, editExpense, runningTotal }: ExpenseRowPro
           Note
           <input name="note" type="text" defaultValue={expense.note ?? ""} className={inputClasses} />
         </label>
-        <div className={`flex gap-3 ${formActionsClasses}`}>
-          <button type="submit" className={`${primaryButtonClasses} flex-1`}>
-            Save
-          </button>
-          <button type="button" onClick={() => setEditing(false)} className={`${secondaryButtonClasses} flex-1`}>
-            Cancel
-          </button>
+        <div className={`flex flex-col gap-3 ${formActionsClasses}`}>
+          <FormFeedback feedback={feedback} />
+          <div className="flex gap-3">
+            <button
+              type="submit"
+              disabled={pending}
+              className={`${primaryButtonClasses} flex-1 disabled:opacity-60`}
+            >
+              {pending ? "Saving…" : "Save"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setEditing(false)}
+              disabled={pending}
+              className={`${secondaryButtonClasses} flex-1 disabled:opacity-60`}
+            >
+              Cancel
+            </button>
+          </div>
         </div>
       </form>
     </div>

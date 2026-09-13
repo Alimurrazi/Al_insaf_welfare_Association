@@ -7,12 +7,15 @@ import { RoleBadge } from "@/components/role-badge";
 import {
   fieldHintClasses,
   fieldLabelClasses,
+  formActionsClasses,
   formClasses,
   inputClasses,
   MEMBERS_ROW_GRID_CLASSES,
   primaryButtonClasses,
   secondaryButtonClasses,
 } from "@/components/styles";
+import { FormFeedback } from "@/components/form-feedback";
+import { useServerActionFeedback } from "@/components/use-server-action-feedback";
 import { toDateInputValue } from "@/lib/format";
 
 interface MemberShareEntry {
@@ -47,9 +50,27 @@ export function MemberRow({
   addShare,
 }: MemberRowProps) {
   const [panelOpen, setPanelOpen] = useState(false);
+  const { feedback, pending, run } = useServerActionFeedback();
   // shares is ordered most-recent-effectiveFrom-first (see listMemberShares),
   // so the first row is the count currently in effect.
   const currentShareCount = shares[0]?.shareCount ?? 0;
+
+  // Deliberately does not close the panel on success (unlike Expense/Topup/
+  // DepositRow) — the panel is also where the share-change history is shown,
+  // so an admin wants to see it stay open right after saving to confirm the
+  // new entry landed.
+  function handleSubmit(event: React.FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    const formData = new FormData(event.currentTarget);
+    run(async () => {
+      await editMember(formData);
+      const shareCount = Number(formData.get("shareCount"));
+      const effectiveFrom = String(formData.get("effectiveFrom") ?? "");
+      if (shareCount > 0 && effectiveFrom) {
+        await addShare(formData);
+      }
+    }, `Member updated — ${member.name}`);
+  }
 
   return (
     <div className="border-t border-line">
@@ -81,17 +102,7 @@ export function MemberRow({
           info edit can submit without also requiring a share count. */}
       {panelOpen && (
         <div className="flex flex-col gap-5 border-t border-line bg-paper px-6 py-4">
-          <form
-            action={async (formData) => {
-              await editMember(formData);
-              const shareCount = Number(formData.get("shareCount"));
-              const effectiveFrom = String(formData.get("effectiveFrom") ?? "");
-              if (shareCount > 0 && effectiveFrom) {
-                await addShare(formData);
-              }
-            }}
-            className="flex flex-col gap-5"
-          >
+          <form onSubmit={handleSubmit} className="flex flex-col gap-5">
             <input type="hidden" name="id" value={member.id} />
             <input type="hidden" name="memberId" value={member.id} />
 
@@ -149,17 +160,25 @@ export function MemberRow({
               </div>
             </div>
 
-            <div className="flex gap-3">
-              <button type="submit" className={`${primaryButtonClasses} flex-1`}>
-                Save
-              </button>
-              <button
-                type="button"
-                onClick={() => setPanelOpen(false)}
-                className={`${secondaryButtonClasses} flex-1`}
-              >
-                Close
-              </button>
+            <div className={`flex flex-col gap-3 ${formActionsClasses}`}>
+              <FormFeedback feedback={feedback} />
+              <div className="flex gap-3">
+                <button
+                  type="submit"
+                  disabled={pending}
+                  className={`${primaryButtonClasses} flex-1 disabled:opacity-60`}
+                >
+                  {pending ? "Saving…" : "Save"}
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPanelOpen(false)}
+                  disabled={pending}
+                  className={`${secondaryButtonClasses} flex-1 disabled:opacity-60`}
+                >
+                  Close
+                </button>
+              </div>
             </div>
           </form>
         </div>

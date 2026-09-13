@@ -92,8 +92,10 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await addForm.getByLabel("Amount").fill("500");
     await addForm.getByLabel("Note").fill("Surveyor fee");
     await addForm.getByRole("button", { name: "Add expense" }).click();
-    await expect(addForm.getByText(/expense saved/i)).toBeVisible();
-    await page.getByRole("button", { name: "Close" }).click();
+    // The modal auto-closes on a successful save — the toast is the only
+    // save confirmation now, so there's no Close button left to click.
+    await expect(page.getByRole("status").filter({ hasText: /expense saved/i })).toBeVisible();
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
 
     await expect(page.getByText("Total: Tk 500.00")).toBeVisible();
 
@@ -130,8 +132,8 @@ test.describe("/expenses — shared, filterable, admin-only write", () => {
     await addForm.getByLabel("Category").fill("Legal fees");
     await addForm.getByLabel("Amount").fill("300");
     await addForm.getByRole("button", { name: "Add expense" }).click();
-    await expect(addForm.getByText(/expense saved/i)).toBeVisible();
-    await page.getByRole("button", { name: "Close" }).click();
+    await expect(page.getByRole("status").filter({ hasText: /expense saved/i })).toBeVisible();
+    await expect(page.locator("dialog[open]")).toHaveCount(0);
 
     // Two expenses now exist ("Land survey" 550 from the prior test, "Legal
     // fees" 300 just added) — filter down to just Legal fees.

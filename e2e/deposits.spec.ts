@@ -119,7 +119,7 @@ test.describe("/deposits access boundary and flow", () => {
     // The modal deliberately stays open after a successful save (so a
     // second month can be added from the same paid date) — close it before
     // asserting on the row underneath.
-    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /deposit saved/i })).toBeVisible();
     await page.getByRole("button", { name: "Close" }).click();
 
     const row = depositRow(page, "Jun 2026");
@@ -166,7 +166,7 @@ test.describe("/deposits access boundary and flow", () => {
 
     await addForm.getByLabel("Amount").fill("500");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
-    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /deposit saved/i })).toBeVisible();
     await page.getByRole("button", { name: "Close" }).click();
 
     const row = depositRow(page, "Jan 2025");
@@ -191,7 +191,7 @@ test.describe("/deposits access boundary and flow", () => {
     await addForm.getByLabel("Paid date").fill("2026-08-16");
     await addForm.getByLabel("Amount").fill("3000");
     await addForm.getByRole("button", { name: "Add deposit" }).click();
-    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /deposit saved/i })).toBeVisible();
 
     // Same paid date, but the admin only changes Month for the second entry
     // — the modal stays open after the first save specifically so this
@@ -200,7 +200,7 @@ test.describe("/deposits access boundary and flow", () => {
     // Month changes here, and Paid date/Amount are left untouched.
     await addForm.getByRole("combobox", { name: /month/i }).selectOption({ label: "September" });
     await addForm.getByRole("button", { name: "Add deposit" }).click();
-    await expect(addForm.getByText(/deposit saved/i)).toBeVisible();
+    await expect(page.getByRole("status").filter({ hasText: /deposit saved/i })).toBeVisible();
     await page.getByRole("button", { name: "Close" }).click();
 
     // "Aug 2026" alone isn't unique: the September row's Paid Date column

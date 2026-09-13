@@ -68,7 +68,7 @@ export const statTileIconClasses = "flex size-12 shrink-0 items-center justify-c
 export const DEPOSITS_ROW_GRID_CLASSES =
   "grid grid-cols-[minmax(160px,1.5fr)_110px_110px_130px_minmax(120px,1fr)_70px] items-center gap-4";
 export const TOPUPS_ROW_GRID_CLASSES =
-  "grid grid-cols-[minmax(200px,1.7fr)_90px_160px_130px_minmax(120px,1fr)_70px] items-center gap-4";
+  "grid grid-cols-[minmax(200px,1.7fr)_90px_160px_130px_120px_minmax(120px,1fr)_70px] items-center gap-4";
 export const EXPENSES_ROW_GRID_CLASSES =
   "grid grid-cols-[130px_minmax(220px,2fr)_160px_130px_150px_70px] items-center gap-4";
 // No Status column (unlike the Figma table): the schema has no
