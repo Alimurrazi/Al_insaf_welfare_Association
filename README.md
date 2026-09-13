@@ -74,14 +74,14 @@ Open [http://localhost:3000](http://localhost:3000) — you'll be redirected to
 
 ## Scripts
 
-| Command | Purpose |
-|---|---|
-| `npm run dev` | Start Postgres (if needed) + the Next.js dev server |
-| `npm run build` / `npm run start` | Production build / start |
-| `npm run lint` | ESLint |
-| `npm test` | Vitest, single run, against the `al_insaf_test` database |
-| `npm run test:watch` | Vitest watch mode |
-| `npm run test:e2e` | Playwright e2e tests, against the `al_insaf_dev` database |
+| Command                               | Purpose                                                    |
+| ------------------------------------- | ---------------------------------------------------------- |
+| `npm run dev`                       | Start Postgres (if needed) + the Next.js dev server        |
+| `npm run build` / `npm run start` | Production build / start                                   |
+| `npm run lint`                      | ESLint                                                     |
+| `npm test`                          | Vitest, single run, against the`al_insaf_test` database  |
+| `npm run test:watch`                | Vitest watch mode                                          |
+| `npm run test:e2e`                  | Playwright e2e tests, against the`al_insaf_dev` database |
 
 ## Project structure
 
